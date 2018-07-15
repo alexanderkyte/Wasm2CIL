@@ -3,7 +3,7 @@ using System;
 using System.IO;
 
 namespace Wasm2CIL {
-	public static class WebassemblySections
+	public static class WebassemblySection
 	{
 		public const int Custom = 0;
 		public const int Type = 1;
@@ -19,40 +19,107 @@ namespace Wasm2CIL {
 		public const int Data = 11;
 	}
 
+	public class WebassemblyType
+	{
+		readonly ulong form;
+		readonly ulong[] parameters;
+		readonly ulong[] results;
+
+		public WebassemblyType (ulong form, ulong[] parameters, ulong[] results)
+		{
+			this.form = form;
+			this.parameters = parameters;
+			this.results = results;
+		}
+	}
+
 	public class Parser {
 		const int WebassemblyMagic = 0x6d736100;
 		const int WebassemblyVersion = 0x01;
 
+		WebassemblyType [] types;
+		// function_index_to_type_index_map. fn_to_type [fn_idx] = type_idx
+		ulong [] fn_to_type;
+		ulong start_idx;
+
+		public void ParseTypeSection (BinaryReader reader)
+		{
+			int num_types = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			Console.WriteLine ("Parse type section:  #types: {0}", num_types);
+
+			this.types = new WebassemblyType [num_types];
+
+			for (int i = 0; i < num_types; i++) {
+				var form = Parser.ParseLEBSigned (reader, 7);
+				var parameters = Parser.ParseLEBSignedArray (reader);
+				var results = Parser.ParseLEBSignedArray (reader);
+				var type = new WebassemblyType (form, parameters, results);
+				this.types [i] = type;
+			}
+		}
+
+		public void ParseFunctionSection (BinaryReader reader)
+		{
+			fn_to_type = ParseLEBSignedArray (reader);
+			Console.WriteLine ("Parse function section:  #types: {0} ", fn_to_type.Length);
+		}
+
+		public void ParseStartSection(BinaryReader reader)
+		{
+			start_idx = Parser.ParseLEBSigned (reader, 32);
+			Console.WriteLine ("Parse start section:  #index: {0} ", start_idx);
+		}
+
+		public void ParseCodeSection (BinaryReader reader)
+		{
+		}
+
 		public void ParseSection (int section_num, byte [] section)
 		{
 			Console.WriteLine ("Parse section {0} length {1}", section_num, section.Length);
+			var memory = new MemoryStream (section);
 
-			switch (section_num) {
-				case WebassemblySections.Custom:
-					break;
-				case WebassemblySections.Type:
-					break;
-				case WebassemblySections.Import:
-					break;
-				case WebassemblySections.Function:
-					break;
-				case WebassemblySections.Table:
-					break;
-				case WebassemblySections.Memory:
-					break;
-				case WebassemblySections.Global:
-					break;
-				case WebassemblySections.Export:
-					break;
-				case WebassemblySections.Start:
-					break;
-				case WebassemblySections.Element:
-					break;
-				case WebassemblySections.Code:
-					break;
-				case WebassemblySections.Data:
-					break;
+			using (BinaryReader reader = new BinaryReader (memory)) {
+				switch (section_num) {
+					case WebassemblySection.Custom:
+						break;
+					case WebassemblySection.Type:
+						ParseTypeSection (reader);
+						break;
+					case WebassemblySection.Import:
+						break;
+					case WebassemblySection.Function:
+						ParseFunctionSection (reader);
+						break;
+					case WebassemblySection.Table:
+						break;
+					case WebassemblySection.Memory:
+						break;
+					case WebassemblySection.Global:
+						break;
+					case WebassemblySection.Export:
+						break;
+					case WebassemblySection.Start:
+						break;
+					case WebassemblySection.Element:
+						break;
+					case WebassemblySection.Code:
+						break;
+					case WebassemblySection.Data:
+						break;
+				}
 			}
+		}
+
+		public static ulong[] ParseLEBSignedArray (BinaryReader reader) 
+		{
+			int len = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			var accum = new ulong [len];
+
+			for (int i=0; i < len; i++)
+				accum [i] = Parser.ParseLEBSigned (reader, 32);
+
+			return accum;
 		}
 
 		public static ulong ParseLEBSigned (BinaryReader reader, int size_bits) {
@@ -97,8 +164,7 @@ namespace Wasm2CIL {
 
 			// Sign extend if all conditions met
 			if (signed && shift_partial && sign_bit_set) {
-				int diff = - (1 << shift);
-				result |= Convert.ToUInt64 (diff);
+				result |= (ulong) (((long) ~0) << shift);
 			}
 
 			return result;

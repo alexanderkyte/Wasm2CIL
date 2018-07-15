@@ -2,11 +2,11 @@
 all: test
 
 .PHONY: test
-test: Parser.exe factorial.wasm
-	mono Parser.exe factorial.wasm
+test: Parser.exe factorial.wasm Makefile
+	mono --debug Parser.exe factorial.wasm
 
-Parser.exe: Parser.cs
-	mcs Parser.cs
+Parser.exe: Parser.cs Makefile
+	mcs -debug Parser.cs
 
 .PHONY: clean
 clean:
