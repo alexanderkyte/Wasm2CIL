@@ -19,13 +19,180 @@ namespace Wasm2CIL {
 		public const int Data = 11;
 	}
 
-	public class WebassemblyType
+	public static class WebassemblyValueType
+	{
+		public const byte I32 = 0x7F;
+		public const byte I64 = 0x7E;
+		public const byte F32 = 0x7D;
+		public const byte F64 = 0x7C;
+	}
+
+	public class WebassemblyLocal
+	{
+		public readonly int size_of_local;
+		public readonly byte valueTypeInit;
+
+		public WebassemblyLocal (int size_of_local, byte valueTypeInit)
+		{
+			this.size_of_local = size_of_local;
+			this.valueTypeInit = valueTypeInit;
+		}
+	}
+
+	public class WebassemblyExpression
+	{
+		public readonly WebassemblyInstruction [] body;
+
+		public WebassemblyExpression (WebassemblyLocal[] locals, byte[] body)
+		{
+			this.locals = locals;
+			var memory = new MemoryStream (body);
+
+			using (BinaryReader reader = new BinaryReader (memory)) {
+				while (reader.BaseStream.Position != reader.BaseStream.Length) {
+					this.body = WebassemblyInstruction.Parse (reader);
+				}
+			}
+		}
+	}
+
+	public class WebassemblyResult
+	{
+	}
+
+	public class WebassemblyLimit
+	{
+		public readonly ulong min;
+		public readonly ulong max;
+
+		public WebassemblyLimit (int min)
+		{
+			this.limit = limit;
+		}
+
+		public WebassemblyLimit (BinaryReader reader)
+		{
+			int kind = Parser.ParseLEBSigned (reader,  32);
+			this.min = Parser.ParseLEBSigned (reader,  32);
+
+			if (kind & 0x1)
+				this.max = Parser.ParseLEBSigned (reader,  32);
+		}
+	}
+
+	public class WebassemblyMemory
+	{
+		public readonly WebassemblyLimit limit;
+
+		public WebassemblyMemory (WebassemblyLimit limit)
+		{
+			this.limit = limit;
+		}
+	}
+
+	public class WebassemblyTable
+	{
+		public readonly WebassemblyLimit limit;
+
+		public WebassemblyTable (ulong elementType, WebassemblyLimit limit)
+		{
+			this.limit = limit;
+			this.elementType = elementType;
+		}
+	}
+
+	public class WebassemblyGlobal
+	{
+		// WebassemblyValueType
+		public readonly int valueType;
+		public readonly bool mutable;
+		public readonly WebassemblyExpression init;
+
+		public WebassemblyGlobal (BinaryReader reader)
+		{
+			valueType = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
+			ulong mut = Parser.ParseLEBSigned (reader, 7);
+			init = new WebassemblyExpression (reader);
+		}
+	}
+
+	public class WebassemblyElementInit
+	{
+		public readonly ulong index;
+		public readonly byte [] body;
+		public readonly WebassemblyExpression expr;
+
+		public WebassemblyElementInit (BinaryReader reader)
+		{
+			index = Parser.ParseLEBSigned (reader, 32);
+			// assert table index is 0, only one allowed in this version
+			if (index != 0)
+				throw new Exception ("At most one table allowed in this version of webassembly");
+
+			expr = new WebassemblyExpression (reader);
+
+			ulong body_size = Parser.ParseLEBSigned (reader, 32);
+			body = reader.ReadBytes (Convert.ToInt32 (body_size));
+		}
+	}
+
+	public class WebassemblyDataInit
+	{
+		public readonly ulong index;
+		public readonly byte [] body;
+		public readonly WebassemblyExpression expr;
+
+		public WebassemblyDataInit (BinaryReader reader)
+		{
+			index = Parser.ParseLEBSigned (reader, 32);
+			// assert table index is 0, only one allowed in this version
+			if (index != 0)
+				throw new Exception ("At most one memory allowed in this version of webassembly");
+
+			expr = new WebassemblyExpression (reader);
+
+			ulong body_size = Parser.ParseLEBSigned (reader, 32);
+			body = reader.ReadBytes (Convert.ToInt32 (body_size));
+		}
+	}
+
+	public class WebassemblyBlock
+	{
+		List<WebassemblyInstruction> body;
+		WebassemblyExpression expr;
+	}
+
+	public class WebassemblyExpression
+	{
+		List<WebassemblyInstruction> body;
+		public readonly WebassemblyLocal [] locals;
+
+		public static WebassemblyExpression (WebassemblyLocal [] locals, BinaryReader reader) 
+		{
+			int depth = 0;
+			// We want to track the depth because we stop reading when we hit Webassemblyinstruction.End
+			body = new List<WebassemblyInstruction> ();
+
+			while (depth >= 0) {
+				int depth_diff = WebassemblyInstruction.BlockDepthDiff (reader);
+				body.Append (WebassemblyInstruction.Parse (reader));
+				depth += depth_diff;
+			}
+		}
+
+		public static WebassemblyExpression (WebassemblyLocal [] locals, BinaryReader reader) 
+		public static WebassemblyExpression (BinaryReader reader) 
+		{
+		}
+	}
+
+	public class WebassemblyFunctionType
 	{
 		readonly ulong form;
 		readonly ulong[] parameters;
 		readonly ulong[] results;
 
-		public WebassemblyType (ulong form, ulong[] parameters, ulong[] results)
+		public WebassemblyFunctionType (ulong form, ulong[] parameters, ulong[] results)
 		{
 			this.form = form;
 			this.parameters = parameters;
@@ -35,25 +202,35 @@ namespace Wasm2CIL {
 
 	public class Parser {
 		const int WebassemblyMagic = 0x6d736100;
+		const int WebassemblyFunctionEnd = 0x0b;
 		const int WebassemblyVersion = 0x01;
 
-		WebassemblyType [] types;
+		// Function index is into table of both imported functions and
+		// defined functions. So fn_idx is not valid into types [], must subtract imported
+		WebassemblyFunctionType [] types;
+		WebassemblyExpression [] exprs;
 		// function_index_to_type_index_map. fn_to_type [fn_idx] = type_idx
 		ulong [] fn_to_type;
 		ulong start_idx;
+
+		WebassemblyGlobal [] globals;
+		WebassemblyElement [] elements;
+		WebassemblyData [] data;
+		WebassemblyTable table;
+		WebassemblyMemory mem;
 
 		public void ParseTypeSection (BinaryReader reader)
 		{
 			int num_types = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			Console.WriteLine ("Parse type section:  #types: {0}", num_types);
 
-			this.types = new WebassemblyType [num_types];
+			this.types = new WebassemblyFunctionType [num_types];
 
 			for (int i = 0; i < num_types; i++) {
 				var form = Parser.ParseLEBSigned (reader, 7);
 				var parameters = Parser.ParseLEBSignedArray (reader);
 				var results = Parser.ParseLEBSignedArray (reader);
-				var type = new WebassemblyType (form, parameters, results);
+				var type = new WebassemblyFunctionType (form, parameters, results);
 				this.types [i] = type;
 			}
 		}
@@ -72,6 +249,100 @@ namespace Wasm2CIL {
 
 		public void ParseCodeSection (BinaryReader reader)
 		{
+			int count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			exprs = new WebassemblyExpression [count];
+
+			for (int i=0; i < count; i++) {
+				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+				var start = reader.BaseStream.Position;
+
+				int num_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+				var locals = new WebassemblyLocal [num_locals];
+
+				for (var local=0; local < num_locals; local++) {
+					// Size of local in count of 32-bit segments
+					var size_of_local = Parser.ParseLEBSigned (reader, 7);
+
+					byte valueTypeInit = Parser.ParseLEBSigned (reader, 7);
+
+					locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
+				}
+
+				var bytes_read = reader.BaseStream.Position - start;
+				var body = reader.ReadBytes (bytes_read);
+
+				if (body [body.Length - 1] != WebassemblyFunctionEnd)
+
+				exprs [i] = new WebassemblyExpression (locals, body);
+			}
+
+			Console.WriteLine ("Parsed code section");
+		}
+
+		public void ParseMemorySection(BinaryReader reader)
+		{
+			var count = Parser.ParseLEBSigned (reader, 32);
+			if (count != 1)
+				throw new Exception ("At most one memory allowed in this version of webassembly");
+			var limit = new WebassemblyLimit (reader);
+			this.mem = new WebassemblyMemory (reader);
+
+			Console.WriteLine ("Parsed memory section");
+		}
+
+		public void ParseTableSection(BinaryReader reader)
+		{
+			var count = Parser.ParseLEBSigned (reader, 32);
+			if (count != 1)
+				throw new Exception ("At most one table allowed in this version of webassembly");
+			var elementType = Parser.ParseLEBSigned (reader, 7);
+			var limit = new WebassemblyLimit (reader);
+			this.table = new WebassemblyTable (elementType, limit);
+
+			Console.WriteLine ("Parsed table section");
+		}
+
+		public void ParseGlobalSection(BinaryReader reader)
+		{
+			var count = Parser.ParseLEBSigned (reader, 32);
+			this.globals = new WebassemblyGlobal [count];
+
+			for (int i=0; i < count; i++)
+				this.globals [i] = new WebassemblyGlobal (reader);
+
+			Console.WriteLine ("Parsed global section, {0}", count);
+		}
+
+		public void ParseElementSection(BinaryReader reader)
+		{
+			var count = Parser.ParseLEBSigned (reader, 32);
+			this.elements = new WebassemblyElement [count];
+
+			for (int i=0; i < count; i++)
+				this.elements [i] = new WebassemblyElement (reader);
+
+			Console.WriteLine ("Parsed element section, {0}", count);
+		}
+
+		public void ParseDataSection(BinaryReader reader)
+		{
+			var count = Parser.ParseLEBSigned (reader, 32);
+			this.data = new WebassemblyElement [count];
+
+			for (int i=0; i < count; i++)
+				this.data [i] = new WebassemblyElement (reader);
+
+			Console.WriteLine ("Parsed data section, {0}", count);
+		}
+
+		public void ParseInputSection(BinaryReader reader)
+		{
+			Console.WriteLine ("Parsed Input section");
+		}
+
+		public void ParseExportSection(BinaryReader reader)
+		{
+			Console.WriteLine ("Parsed Export section");
 		}
 
 		public void ParseSection (int section_num, byte [] section)
@@ -100,10 +371,12 @@ namespace Wasm2CIL {
 					case WebassemblySection.Export:
 						break;
 					case WebassemblySection.Start:
+						ParseStartSection (reader);
 						break;
 					case WebassemblySection.Element:
 						break;
 					case WebassemblySection.Code:
+						ParseCodeSection (reader);
 						break;
 					case WebassemblySection.Data:
 						break;
@@ -177,7 +450,7 @@ namespace Wasm2CIL {
 
 			try
 			{
-				if (File.Exists(inputPath)) {
+				if (File.Exists (inputPath)) {
 					using (BinaryReader reader = new BinaryReader(File.Open(inputPath, FileMode.Open))) {
 						var magic_constant = reader.ReadInt32 ();
 						if (magic_constant != Parser.WebassemblyMagic)
