@@ -61,10 +61,10 @@ namespace Wasm2CIL {
 		public WebassemblyLimit (BinaryReader reader)
 		{
 			int kind = Convert.ToInt32 (Parser.ParseLEBSigned (reader,  32));
-			this.min = Parser.ParseLEBSigned (reader,  32);
+			this.min = Parser.ParseLEBUnsigned (reader,  32);
 
 			if (kind == 0x1)
-				this.max = Parser.ParseLEBSigned (reader,  32);
+				this.max = Parser.ParseLEBUnsigned (reader,  32);
 			else if (kind == 0x0)
 				this.max = 0;
 			else
@@ -104,14 +104,14 @@ namespace Wasm2CIL {
 		public WebassemblyGlobal (BinaryReader reader)
 		{
 			valueType = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
-			ulong mut = Parser.ParseLEBSigned (reader, 7);
+			long mut = Parser.ParseLEBSigned (reader, 7);
 			init = new WebassemblyExpression (reader);
 		}
 	}
 
 	public class WebassemblyElementInit
 	{
-		public readonly ulong index;
+		public readonly long index;
 		public readonly byte [] body;
 		public readonly WebassemblyExpression expr;
 
@@ -124,14 +124,14 @@ namespace Wasm2CIL {
 
 			expr = new WebassemblyExpression (reader);
 
-			ulong body_size = Parser.ParseLEBSigned (reader, 32);
+			long body_size = Parser.ParseLEBSigned (reader, 32);
 			body = reader.ReadBytes (Convert.ToInt32 (body_size));
 		}
 	}
 
 	public class WebassemblyDataInit
 	{
-		public readonly ulong index;
+		public readonly long index;
 		public readonly byte [] body;
 		public readonly WebassemblyExpression expr;
 
@@ -144,7 +144,7 @@ namespace Wasm2CIL {
 
 			expr = new WebassemblyExpression (reader);
 
-			ulong body_size = Parser.ParseLEBSigned (reader, 32);
+			long body_size = Parser.ParseLEBSigned (reader, 32);
 			body = reader.ReadBytes (Convert.ToInt32 (body_size));
 		}
 	}
@@ -171,7 +171,7 @@ namespace Wasm2CIL {
 
 	public class WebassemblyExpression
 	{
-		List<WebassemblyInstruction> body;
+		WebassemblyInstruction [] body;
 
 		public WebassemblyExpression (BinaryReader reader): this (reader, false)
 		{
@@ -179,28 +179,20 @@ namespace Wasm2CIL {
 
 		public WebassemblyExpression (BinaryReader reader, bool readToEnd) 
 		{
-			int depth = 0;
-			// We want to track the depth because we stop reading when we hit Webassemblyinstruction.End
-			body = new List<WebassemblyInstruction> ();
+			body = WebassemblyInstructionBlock.Parse (reader);
 
-			while (depth >= 0) {
-				int depth_diff = WebassemblyInstruction.BlockDepthDiff (reader);
-				body.Add (WebassemblyInstruction.Parse (reader));
-				depth += depth_diff;
-			}
-			if (readToEnd)
-				throw new Exception ("Did not finish function");
-
+			if (readToEnd && (reader.BaseStream.Position != reader.BaseStream.Length))
+				throw new Exception ("Didn't actually read to end");
 		}
 	}
 
 	public class WebassemblyFunctionType
 	{
-		readonly ulong form;
+		readonly long form;
 		readonly ulong[] parameters;
 		readonly ulong[] results;
 
-		public WebassemblyFunctionType (ulong form, ulong[] parameters, ulong[] results)
+		public WebassemblyFunctionType (long form, ulong[] parameters, ulong[] results)
 		{
 			this.form = form;
 			this.parameters = parameters;
@@ -236,8 +228,8 @@ namespace Wasm2CIL {
 
 			for (int i = 0; i < num_types; i++) {
 				var form = Parser.ParseLEBSigned (reader, 7);
-				var parameters = Parser.ParseLEBSignedArray (reader);
-				var results = Parser.ParseLEBSignedArray (reader);
+				var parameters = Parser.ParseLEBUnsignedArray (reader);
+				var results = Parser.ParseLEBUnsignedArray (reader);
 				var type = new WebassemblyFunctionType (form, parameters, results);
 				this.types [i] = type;
 			}
@@ -245,13 +237,13 @@ namespace Wasm2CIL {
 
 		public void ParseFunctionSection (BinaryReader reader)
 		{
-			fn_to_type = ParseLEBSignedArray (reader);
+			fn_to_type = ParseLEBUnsignedArray (reader);
 			Console.WriteLine ("Parse function section:  #types: {0} ", fn_to_type.Length);
 		}
 
 		public void ParseStartSection(BinaryReader reader)
 		{
-			start_idx = Parser.ParseLEBSigned (reader, 32);
+			start_idx = Parser.ParseLEBUnsigned (reader, 32);
 			Console.WriteLine ("Parse start section:  #index: {0} ", start_idx);
 		}
 
@@ -288,7 +280,7 @@ namespace Wasm2CIL {
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			if (count != 1)
 				throw new Exception ("At most one table allowed in this version of webassembly");
-			var elementType = Parser.ParseLEBSigned (reader, 7);
+			var elementType = Parser.ParseLEBUnsigned (reader, 7);
 			var limit = new WebassemblyLimit (reader);
 			this.table = new WebassemblyTable (elementType, limit);
 
@@ -385,26 +377,26 @@ namespace Wasm2CIL {
 			}
 		}
 
-		public static ulong[] ParseLEBSignedArray (BinaryReader reader) 
+		public static ulong[] ParseLEBUnsignedArray (BinaryReader reader) 
 		{
 			int len = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			var accum = new ulong [len];
 
 			for (int i=0; i < len; i++)
-				accum [i] = Parser.ParseLEBSigned (reader, 32);
+				accum [i] = Parser.ParseLEBUnsigned (reader, 32);
 
 			return accum;
 		}
 
-		public static ulong ParseLEBSigned (BinaryReader reader, int size_bits) {
-			return ParseLEB (reader, Convert.ToUInt32 (size_bits), true);
+		public static long ParseLEBSigned (BinaryReader reader, int size_bits) {
+			return (long) ParseLEB (reader, Convert.ToUInt32 (size_bits), true);
 		}
 
 		public static ulong ParseLEBUnsigned (BinaryReader reader, int size_bits) {
-			return ParseLEB (reader, Convert.ToUInt32 (size_bits), false);
+			return (ulong) ParseLEB (reader, Convert.ToUInt32 (size_bits), false);
 		}
 
-		public static ulong ParseLEB (BinaryReader reader, uint size_bits, bool signed)
+		public static IntPtr ParseLEB (BinaryReader reader, uint size_bits, bool signed)
 		{
 			// Taken from pseudocode here: https://en.wikipedia.org/wiki/LEB128
 			ulong result = 0;
@@ -441,7 +433,7 @@ namespace Wasm2CIL {
 				result |= (ulong) (((long) ~0) << shift);
 			}
 
-			return result;
+			return (IntPtr) result;
 		}
 
 		public static void Main (string [] args) 

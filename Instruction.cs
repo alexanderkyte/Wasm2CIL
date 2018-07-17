@@ -1,63 +1,62 @@
 using System;
 using System.IO;
 using System.Reflection.Emit;
+using System.Collections.Generic;
 
 namespace Wasm2CIL {
 	
+	public class WebassemblyInstructionBlock
+	{
+		public static WebassemblyInstruction [] Parse (BinaryReader reader) 
+		{
+			var accum = new List<WebassemblyInstruction> ();
+			int depth = 0;
+
+			while (depth >= 0 && (reader.BaseStream.Position != reader.BaseStream.Length)) {
+				WebassemblyInstruction result = null;
+				byte opcode = reader.ReadByte ();
+
+				if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
+					result = new WebassemblyControlInstruction (opcode, reader);
+
+					depth += ((WebassemblyControlInstruction ) result).DepthChange ();
+
+				} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
+					result = new WebassemblyParametricInstruction (opcode, reader);
+				} else if (opcode <= WebassemblyVariableInstruction.UpperBound ()) {
+					result = new WebassemblyVariableInstruction (opcode, reader);
+				} else if (opcode <= WebassemblyMemoryInstruction.UpperBound ()) {
+					result = new WebassemblyMemoryInstruction (opcode, reader);
+				} else if (opcode <= WebassemblyNumericInstruction.UpperBound ()) {
+					result = new WebassemblyNumericInstruction (opcode, reader);
+				} else {
+					throw new Exception (String.Format ("Illegal instruction {0:X}", opcode));
+				}
+				accum.Add (result);
+				if (depth > 0)
+					Console.WriteLine ("{0}{1}", new String (' ', depth), result.ToString ());
+				else
+					Console.WriteLine ("{0}: END", result.ToString ());
+			}
+
+			return accum.ToArray ();
+		}
+	}
 
 	public abstract class WebassemblyInstruction
 	{
 		public const byte END = 0x0B;
 
-		protected byte opcode;
+		public readonly byte opcode;
+
+		public WebassemblyInstruction (byte opcode)
+		{
+			this.opcode = opcode;
+		}
 
 		public virtual string ToString () 
 		{
 			throw new Exception ("Must call instance copy of ToString for WebassemblyInstruction");
-		}
-
-		public static int BlockDepthDiff (BinaryReader reader) 
-		{
-			int opcode = reader.PeekChar ();
-			if (opcode == END)
-				return -1;
-
-			// Block, loop, if
-			if (opcode == 0x02 || opcode == 0x03 || opcode == 0x04)
-				return 1;
-
-			// Everything else is unchanged
-			return 0;
-		}
-
-		public static WebassemblyInstruction Parse (BinaryReader reader) 
-		{
-			int opcode = reader.PeekChar ();
-
-			WebassemblyInstruction result = null;
-
-			if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
-				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyControlInstruction.UpperBound ());
-				result = new WebassemblyControlInstruction (reader);
-			} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
-				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyParametricInstruction.UpperBound ());
-				result = new WebassemblyParametricInstruction (reader);
-			} else if (opcode <= WebassemblyVariableInstruction.UpperBound ()) {
-				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyVariableInstruction.UpperBound ());
-				result = new WebassemblyVariableInstruction (reader);
-			} else if (opcode <= WebassemblyMemoryInstruction.UpperBound ()) {
-				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyMemoryInstruction.UpperBound ());
-				result = new WebassemblyMemoryInstruction (reader);
-			} else if (opcode <= WebassemblyNumericInstruction.UpperBound ()) {
-				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyNumericInstruction.UpperBound ());
-				result = new WebassemblyNumericInstruction (reader);
-			} else {
-				throw new Exception (String.Format ("Illegal instruction {0:X}", opcode));
-			}
-
-			Console.WriteLine ("Parsed {0}", result.ToString ());
-
-			return result;
 		}
 
 		public void Add (MethodBuilder builder) 
@@ -72,6 +71,22 @@ namespace Wasm2CIL {
 		ulong index;
 		ulong default_target;
 		ulong block_type;
+		ulong function_index;
+		ulong type_index;
+
+		public int DepthChange () 
+		{
+			if (opcode == 0x0b)
+				return -1;
+
+			// Block, loop, if
+			if (opcode == 0x02 || opcode == 0x03 || opcode == 0x04)
+				return 1;
+
+			// Everything else is unchanged
+			return 0;
+		}
+
 
 		public override string ToString () 
 		{
@@ -99,9 +114,9 @@ namespace Wasm2CIL {
 				case 0x0f:
 					return "return";
 				case 0x10:
-					return "call";
+					return String.Format ("call {0}", this.function_index);
 				case 0x11:
-					return "call_indirect";
+					return String.Format ("call_indirect {0}", this.type_index);
 				default:
 					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
 			}
@@ -112,9 +127,8 @@ namespace Wasm2CIL {
 			return 0x11;
 		}
 
-		public WebassemblyControlInstruction (BinaryReader reader) 
+		public WebassemblyControlInstruction (byte opcode, BinaryReader reader): base (opcode)
 		{
-			this.opcode = reader.ReadByte ();
 			switch (this.opcode) {
 				case 0x0: // unreachable
 				case 0x1: // nop
@@ -123,21 +137,33 @@ namespace Wasm2CIL {
 					break;
 				case 0x0C: // br
 				case 0x0D: // br_if
-					this.index = Parser.ParseLEBSigned (reader, 32);
+					this.index = Parser.ParseLEBUnsigned (reader, 32);
 					break;
 				case 0x02: // block
 				case 0x03: // loop 
 				case 0x04: // if
-					this.block_type = Parser.ParseLEBSigned (reader, 32);
+					this.block_type = Parser.ParseLEBUnsigned (reader, 32);
 					break;
 				case 0x0e: // br_table
 					// works by getting index from stack. If index is in range of table,
 					// we jump to the label at that index. Else go to default.
-					this.table = Parser.ParseLEBSignedArray (reader);
-					this.default_target = Parser.ParseLEBSigned (reader, 32);
+					this.table = Parser.ParseLEBUnsignedArray (reader);
+					this.default_target = Parser.ParseLEBUnsigned (reader, 32);
+					break;
+				case 0x10: //call
+					this.function_index = Parser.ParseLEBUnsigned (reader, 32);
+					break;
+				case 0x11: //call indirect
+					this.type_index = Parser.ParseLEBUnsigned (reader, 32);
+					var endcap = Parser.ParseLEBUnsigned (reader, 32);
+					if (endcap != 0x0)
+						throw new Exception ("Call indirect call not ended with 0x0");
+					break;
+				case 0x0B: // end
+					// foo?
 					break;
 				default:
-					throw new Exception (String.Format ("Control instruction out of range {0}", this.opcode));
+					throw new Exception (String.Format ("Control instruction out of range {0:X}", this.opcode));
 			}
 			
 		}
@@ -162,8 +188,8 @@ namespace Wasm2CIL {
 			}
 		}
 
-		public WebassemblyParametricInstruction (BinaryReader reader) {
-			this.opcode = reader.ReadByte ();
+		public WebassemblyParametricInstruction (byte opcode, BinaryReader reader): base (opcode)
+		{
 			if (this.opcode != 0x1A && this.opcode <= 0x1B) {
 				throw new Exception ("Parametric opcode out of range");
 			}
@@ -197,10 +223,10 @@ namespace Wasm2CIL {
 			return 0x24;
 		}
 
-		public WebassemblyVariableInstruction (BinaryReader reader) {
-			this.opcode = reader.ReadByte ();
+		public WebassemblyVariableInstruction (byte opcode, BinaryReader reader): base (opcode)
+		{
 			if (this.opcode >= 0x20 && this.opcode <= 0x24) {
-				this.index = Parser.ParseLEBSigned (reader, 32);
+				this.index = Parser.ParseLEBUnsigned (reader, 32);
 			} else if (this.opcode > 0x24) {
 				throw new Exception ("Variable opcode out of range");
 			}
@@ -275,11 +301,15 @@ namespace Wasm2CIL {
 			return 0x40;
 		}
 
-		public WebassemblyMemoryInstruction (BinaryReader reader) {
-			this.opcode = reader.ReadByte ();
+		public WebassemblyMemoryInstruction (byte opcode, BinaryReader reader): base (opcode)
+		{
 			if (this.opcode >= 0x28 && this.opcode <= 0x3E) {
-				this.align = Parser.ParseLEBSigned (reader, 32);
-				this.offset = Parser.ParseLEBSigned (reader, 32);
+				this.align = Parser.ParseLEBUnsigned (reader, 32);
+				this.offset = Parser.ParseLEBUnsigned (reader, 32);
+			} else if (this.opcode == 0x3F || this.opcode == 0x40) {
+				var endcap = reader.ReadByte ();
+				if (endcap != 0x0)
+					throw new Exception ("Memory size instruction lackend null endcap");
 			} else if (this.opcode > 0x40) {
 				throw new Exception ("Memory opcode out of range");
 			}
@@ -292,13 +322,13 @@ namespace Wasm2CIL {
 		{
 			switch (opcode) {
 				case 0x41:
-					return "i32.const";
+					return String.Format ("i32.const {0}", operand_i32);
 				case 0x42:
-					return "i64.const";
+					return String.Format ("i64.const {0}", operand_i64);
 				case 0x43:
-					return "f32.const";
+					return String.Format ("f32.const {0}", operand_f32);
 				case 0x44:
-					return "f64.const";
+					return String.Format ("f64.const {0}", operand_f64);
 				case 0x45:
 					return "i32.eqz";
 				case 0x46:
@@ -555,18 +585,25 @@ namespace Wasm2CIL {
 			return 0xBF;
 		}
 
-		readonly byte operand;
-		public WebassemblyNumericInstruction (BinaryReader reader) 
+		int operand_i32;
+		long operand_i64;
+		float operand_f32;
+		double operand_f64;
+
+		public WebassemblyNumericInstruction (byte opcode, BinaryReader reader): base (opcode)
 		{
-			this.opcode = reader.ReadByte ();
-			if (this.opcode >= 0x41 && this.opcode <= 0x44) {
-
-				//this.operand = reader.ReadByte ();
-				// size of literal varies by type
-
-			} else if (this.opcode > 0xBF) {
+			if (this.opcode > 0xBF) {
 				throw new Exception ("Numerical opcode out of range");
+			} else if (this.opcode == 0x41) {
+				operand_i32 = Convert.ToInt32 (reader.ReadInt32 ());
+			} else if (this.opcode == 0x42) {
+				operand_i64 = Convert.ToInt64 (reader.ReadInt64 ());
+			} else if (this.opcode == 0x43) {
+				operand_f32 = Convert.ToSingle (reader.ReadInt32 ());
+			} else if (this.opcode == 0x44) {
+				operand_f64 = Convert.ToDouble (reader.ReadInt64 ());
 			}
+
 		}
 	}
 }
