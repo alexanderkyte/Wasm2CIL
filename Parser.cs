@@ -1,6 +1,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Wasm2CIL {
 	public static class WebassemblySection
@@ -30,31 +31,15 @@ namespace Wasm2CIL {
 	public class WebassemblyLocal
 	{
 		public readonly int size_of_local;
-		public readonly byte valueTypeInit;
+		public readonly int valueTypeInit;
 
-		public WebassemblyLocal (int size_of_local, byte valueTypeInit)
+		public WebassemblyLocal (int size_of_local, int valueTypeInit)
 		{
 			this.size_of_local = size_of_local;
 			this.valueTypeInit = valueTypeInit;
 		}
 	}
 
-	public class WebassemblyExpression
-	{
-		public readonly WebassemblyInstruction [] body;
-
-		public WebassemblyExpression (WebassemblyLocal[] locals, byte[] body)
-		{
-			this.locals = locals;
-			var memory = new MemoryStream (body);
-
-			using (BinaryReader reader = new BinaryReader (memory)) {
-				while (reader.BaseStream.Position != reader.BaseStream.Length) {
-					this.body = WebassemblyInstruction.Parse (reader);
-				}
-			}
-		}
-	}
 
 	public class WebassemblyResult
 	{
@@ -63,20 +48,27 @@ namespace Wasm2CIL {
 	public class WebassemblyLimit
 	{
 		public readonly ulong min;
+
+		// 0 signifies unlimited
 		public readonly ulong max;
 
-		public WebassemblyLimit (int min)
+		public WebassemblyLimit (ulong min, ulong max)
 		{
-			this.limit = limit;
+			this.min = min;
+			this.max = max;
 		}
 
 		public WebassemblyLimit (BinaryReader reader)
 		{
-			int kind = Parser.ParseLEBSigned (reader,  32);
+			int kind = Convert.ToInt32 (Parser.ParseLEBSigned (reader,  32));
 			this.min = Parser.ParseLEBSigned (reader,  32);
 
-			if (kind & 0x1)
+			if (kind == 0x1)
 				this.max = Parser.ParseLEBSigned (reader,  32);
+			else if (kind == 0x0)
+				this.max = 0;
+			else
+				throw new Exception ("Wrong limit type");
 		}
 	}
 
@@ -93,6 +85,7 @@ namespace Wasm2CIL {
 	public class WebassemblyTable
 	{
 		public readonly WebassemblyLimit limit;
+		public readonly ulong elementType;
 
 		public WebassemblyTable (ulong elementType, WebassemblyLimit limit)
 		{
@@ -112,7 +105,7 @@ namespace Wasm2CIL {
 		{
 			valueType = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 			ulong mut = Parser.ParseLEBSigned (reader, 7);
-			init = new WebassemblyExpression (reader);
+			init = new WebassemblyExpression (null, reader);
 		}
 	}
 
@@ -129,7 +122,7 @@ namespace Wasm2CIL {
 			if (index != 0)
 				throw new Exception ("At most one table allowed in this version of webassembly");
 
-			expr = new WebassemblyExpression (reader);
+			expr = new WebassemblyExpression (null, reader);
 
 			ulong body_size = Parser.ParseLEBSigned (reader, 32);
 			body = reader.ReadBytes (Convert.ToInt32 (body_size));
@@ -149,7 +142,7 @@ namespace Wasm2CIL {
 			if (index != 0)
 				throw new Exception ("At most one memory allowed in this version of webassembly");
 
-			expr = new WebassemblyExpression (reader);
+			expr = new WebassemblyExpression (null, reader);
 
 			ulong body_size = Parser.ParseLEBSigned (reader, 32);
 			body = reader.ReadBytes (Convert.ToInt32 (body_size));
@@ -167,7 +160,7 @@ namespace Wasm2CIL {
 		List<WebassemblyInstruction> body;
 		public readonly WebassemblyLocal [] locals;
 
-		public static WebassemblyExpression (WebassemblyLocal [] locals, BinaryReader reader) 
+		public WebassemblyExpression (WebassemblyLocal [] locals, BinaryReader reader) 
 		{
 			int depth = 0;
 			// We want to track the depth because we stop reading when we hit Webassemblyinstruction.End
@@ -175,14 +168,9 @@ namespace Wasm2CIL {
 
 			while (depth >= 0) {
 				int depth_diff = WebassemblyInstruction.BlockDepthDiff (reader);
-				body.Append (WebassemblyInstruction.Parse (reader));
+				body.Add (WebassemblyInstruction.Parse (reader));
 				depth += depth_diff;
 			}
-		}
-
-		public static WebassemblyExpression (WebassemblyLocal [] locals, BinaryReader reader) 
-		public static WebassemblyExpression (BinaryReader reader) 
-		{
 		}
 	}
 
@@ -214,8 +202,8 @@ namespace Wasm2CIL {
 		ulong start_idx;
 
 		WebassemblyGlobal [] globals;
-		WebassemblyElement [] elements;
-		WebassemblyData [] data;
+		WebassemblyElementInit [] elements;
+		WebassemblyDataInit [] data;
 		WebassemblyTable table;
 		WebassemblyMemory mem;
 
@@ -261,50 +249,57 @@ namespace Wasm2CIL {
 
 				for (var local=0; local < num_locals; local++) {
 					// Size of local in count of 32-bit segments
-					var size_of_local = Parser.ParseLEBSigned (reader, 7);
+					int size_of_local = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 
-					byte valueTypeInit = Parser.ParseLEBSigned (reader, 7);
+					int valueTypeInit = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 
 					locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
 				}
 
-				var bytes_read = reader.BaseStream.Position - start;
-				var body = reader.ReadBytes (bytes_read);
+				ulong length = 0;
+				while (reader.ReadByte () != WebassemblyFunctionEnd)
+					length++;
 
-				if (body [body.Length - 1] != WebassemblyFunctionEnd)
+				//exprs [i] = new WebassemblyExpression (locals, reader);
+				//var bytes_read = reader.BaseStream.Position - start;
+				//var body = reader.ReadBytes (Convert.ToInt32 (bytes_read));
 
-				exprs [i] = new WebassemblyExpression (locals, body);
+				//if (body [body.Length - 1] != WebassemblyFunctionEnd)
+					//throw new Exception ("Code section: expression does not have terminating byte");
+
+				//using (BinaryReader bodyReader = new BinaryReader (new MemoryStream (body))) {
+				//}
+				Console.WriteLine ("Parsed code section one {0} locals and code length of {1}", num_locals, length);
 			}
 
-			Console.WriteLine ("Parsed code section");
+			Console.WriteLine ("Parsed code section done");
 		}
 
 		public void ParseMemorySection(BinaryReader reader)
 		{
-			var count = Parser.ParseLEBSigned (reader, 32);
+			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			if (count != 1)
 				throw new Exception ("At most one memory allowed in this version of webassembly");
-			var limit = new WebassemblyLimit (reader);
-			this.mem = new WebassemblyMemory (reader);
+			this.mem = new WebassemblyMemory (new WebassemblyLimit (reader));
 
-			Console.WriteLine ("Parsed memory section");
+			Console.WriteLine ("Parsed memory section. Limit is {0} {1}", this.mem.limit.min, this.mem.limit.max);
 		}
 
 		public void ParseTableSection(BinaryReader reader)
 		{
-			var count = Parser.ParseLEBSigned (reader, 32);
+			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			if (count != 1)
 				throw new Exception ("At most one table allowed in this version of webassembly");
 			var elementType = Parser.ParseLEBSigned (reader, 7);
 			var limit = new WebassemblyLimit (reader);
 			this.table = new WebassemblyTable (elementType, limit);
 
-			Console.WriteLine ("Parsed table section");
+			Console.WriteLine ("Parsed table section. Limit is {0} {1}", limit.min, limit.max);
 		}
 
 		public void ParseGlobalSection(BinaryReader reader)
 		{
-			var count = Parser.ParseLEBSigned (reader, 32);
+			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			this.globals = new WebassemblyGlobal [count];
 
 			for (int i=0; i < count; i++)
@@ -315,29 +310,29 @@ namespace Wasm2CIL {
 
 		public void ParseElementSection(BinaryReader reader)
 		{
-			var count = Parser.ParseLEBSigned (reader, 32);
-			this.elements = new WebassemblyElement [count];
+			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			this.elements = new WebassemblyElementInit [count];
 
 			for (int i=0; i < count; i++)
-				this.elements [i] = new WebassemblyElement (reader);
+				this.elements [i] = new WebassemblyElementInit (reader);
 
 			Console.WriteLine ("Parsed element section, {0}", count);
 		}
 
 		public void ParseDataSection(BinaryReader reader)
 		{
-			var count = Parser.ParseLEBSigned (reader, 32);
-			this.data = new WebassemblyElement [count];
+			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			this.data = new WebassemblyDataInit [count];
 
 			for (int i=0; i < count; i++)
-				this.data [i] = new WebassemblyElement (reader);
+				this.data [i] = new WebassemblyDataInit (reader);
 
 			Console.WriteLine ("Parsed data section, {0}", count);
 		}
 
-		public void ParseInputSection(BinaryReader reader)
+		public void ParseImportSection(BinaryReader reader)
 		{
-			Console.WriteLine ("Parsed Input section");
+			Console.WriteLine ("Parsed Import section");
 		}
 
 		public void ParseExportSection(BinaryReader reader)
@@ -353,32 +348,40 @@ namespace Wasm2CIL {
 			using (BinaryReader reader = new BinaryReader (memory)) {
 				switch (section_num) {
 					case WebassemblySection.Custom:
+						// We don't have anything here for mono
 						break;
 					case WebassemblySection.Type:
 						ParseTypeSection (reader);
 						break;
 					case WebassemblySection.Import:
+						ParseImportSection (reader);
 						break;
 					case WebassemblySection.Function:
 						ParseFunctionSection (reader);
 						break;
 					case WebassemblySection.Table:
+						ParseTableSection (reader);
 						break;
 					case WebassemblySection.Memory:
+						ParseMemorySection (reader);
 						break;
 					case WebassemblySection.Global:
+						ParseGlobalSection (reader);
 						break;
 					case WebassemblySection.Export:
+						ParseExportSection (reader);
 						break;
 					case WebassemblySection.Start:
 						ParseStartSection (reader);
 						break;
 					case WebassemblySection.Element:
+						ParseElementSection (reader);
 						break;
 					case WebassemblySection.Code:
 						ParseCodeSection (reader);
 						break;
 					case WebassemblySection.Data:
+						ParseDataSection (reader);
 						break;
 				}
 			}
