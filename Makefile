@@ -5,7 +5,7 @@ all: test
 test: Parser.exe factorial.wasm Makefile
 	mono --debug Parser.exe factorial.wasm
 
-Parser.exe: Parser.cs Makefile
+Parser.exe: Parser.cs Makefile Instruction.cs
 	mcs -debug Parser.cs Instruction.cs
 
 .PHONY: clean

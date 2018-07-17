@@ -164,8 +164,8 @@ namespace Wasm2CIL {
 				int valueTypeInit = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 				this.locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
 			}
-			this.expr = new WebassemblyExpression (reader, true);
 			Console.WriteLine ("Parsed code section one {0} locals", num_locals);
+			this.expr = new WebassemblyExpression (reader, true);
 		}
 	}
 
