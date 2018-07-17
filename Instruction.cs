@@ -26,15 +26,19 @@ namespace Wasm2CIL {
 
 		public static WebassemblyInstruction Parse (BinaryReader reader) 
 		{
-			byte opcode = reader.ReadByte ();
+			int opcode = reader.PeekChar ();
 
 			if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
+				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyControlInstruction.UpperBound ());
 				return new WebassemblyControlInstruction (reader);
 			} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
+				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyParametricInstruction.UpperBound ());
 				return new WebassemblyParametricInstruction (reader);
 			} else if (opcode <= WebassemblyMemoryInstruction.UpperBound ()) {
+				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyMemoryInstruction.UpperBound ());
 				return new WebassemblyMemoryInstruction (reader);
 			} else if (opcode <= WebassemblyNumericInstruction.UpperBound ()) {
+				Console.WriteLine ("0x{0:X} <= 0x{1:X}", opcode, WebassemblyNumericInstruction.UpperBound ());
 				return new WebassemblyNumericInstruction (reader);
 			} else {
 				throw new Exception (String.Format ("Illegal instruction {0}", opcode));
@@ -86,7 +90,7 @@ namespace Wasm2CIL {
 					this.default_target = Parser.ParseLEBSigned (reader, 32);
 					break;
 				default:
-					throw new Exception ("Control instruction out of range");
+					throw new Exception (String.Format ("Control instruction out of range {0}", this.opcode));
 			}
 			
 		}

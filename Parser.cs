@@ -105,7 +105,7 @@ namespace Wasm2CIL {
 		{
 			valueType = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 			ulong mut = Parser.ParseLEBSigned (reader, 7);
-			init = new WebassemblyExpression (null, reader);
+			init = new WebassemblyExpression (reader);
 		}
 	}
 
@@ -122,7 +122,7 @@ namespace Wasm2CIL {
 			if (index != 0)
 				throw new Exception ("At most one table allowed in this version of webassembly");
 
-			expr = new WebassemblyExpression (null, reader);
+			expr = new WebassemblyExpression (reader);
 
 			ulong body_size = Parser.ParseLEBSigned (reader, 32);
 			body = reader.ReadBytes (Convert.ToInt32 (body_size));
@@ -142,25 +142,42 @@ namespace Wasm2CIL {
 			if (index != 0)
 				throw new Exception ("At most one memory allowed in this version of webassembly");
 
-			expr = new WebassemblyExpression (null, reader);
+			expr = new WebassemblyExpression (reader);
 
 			ulong body_size = Parser.ParseLEBSigned (reader, 32);
 			body = reader.ReadBytes (Convert.ToInt32 (body_size));
 		}
 	}
 
-	public class WebassemblyBlock
+	public class WebassemblyFunc
 	{
-		List<WebassemblyInstruction> body;
-		WebassemblyExpression expr;
+		public readonly WebassemblyLocal [] locals;
+		public readonly WebassemblyExpression expr;
+
+		public WebassemblyFunc (BinaryReader reader) 
+		{
+			int num_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			this.locals = new WebassemblyLocal [num_locals];
+			for (int local=0; local < num_locals; local++) {
+				// Size of local in count of 32-bit segments
+				int size_of_local = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
+				int valueTypeInit = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
+				this.locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
+			}
+			this.expr = new WebassemblyExpression (reader, true);
+			Console.WriteLine ("Parsed code section one {0} locals", num_locals);
+		}
 	}
 
 	public class WebassemblyExpression
 	{
 		List<WebassemblyInstruction> body;
-		public readonly WebassemblyLocal [] locals;
 
-		public WebassemblyExpression (WebassemblyLocal [] locals, BinaryReader reader) 
+		public WebassemblyExpression (BinaryReader reader): this (reader, false)
+		{
+		}
+
+		public WebassemblyExpression (BinaryReader reader, bool readToEnd) 
 		{
 			int depth = 0;
 			// We want to track the depth because we stop reading when we hit Webassemblyinstruction.End
@@ -171,6 +188,9 @@ namespace Wasm2CIL {
 				body.Add (WebassemblyInstruction.Parse (reader));
 				depth += depth_diff;
 			}
+			if (readToEnd)
+				throw new Exception ("Did not finish function");
+
 		}
 	}
 
@@ -196,7 +216,7 @@ namespace Wasm2CIL {
 		// Function index is into table of both imported functions and
 		// defined functions. So fn_idx is not valid into types [], must subtract imported
 		WebassemblyFunctionType [] types;
-		WebassemblyExpression [] exprs;
+		WebassemblyFunc [] exprs;
 		// function_index_to_type_index_map. fn_to_type [fn_idx] = type_idx
 		ulong [] fn_to_type;
 		ulong start_idx;
@@ -235,41 +255,19 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parse start section:  #index: {0} ", start_idx);
 		}
 
-		public void ParseCodeSection (BinaryReader reader)
+		public void ParseCodeSection (BinaryReader sectionReader)
 		{
-			int count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-			exprs = new WebassemblyExpression [count];
+			int count = Convert.ToInt32 (Parser.ParseLEBSigned (sectionReader, 32));
+			exprs = new WebassemblyFunc [count];
 
 			for (int i=0; i < count; i++) {
-				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-				var start = reader.BaseStream.Position;
+				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBSigned (sectionReader, 32));
+				// doing now so I can parallelize lower parsing later
+				byte [] entry = sectionReader.ReadBytes (size_of_entry);
 
-				int num_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-				var locals = new WebassemblyLocal [num_locals];
-
-				for (var local=0; local < num_locals; local++) {
-					// Size of local in count of 32-bit segments
-					int size_of_local = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
-
-					int valueTypeInit = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
-
-					locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
+				using (BinaryReader bodyReader = new BinaryReader (new MemoryStream (entry))) {
+					exprs [i] = new WebassemblyFunc (bodyReader);
 				}
-
-				ulong length = 0;
-				while (reader.ReadByte () != WebassemblyFunctionEnd)
-					length++;
-
-				//exprs [i] = new WebassemblyExpression (locals, reader);
-				//var bytes_read = reader.BaseStream.Position - start;
-				//var body = reader.ReadBytes (Convert.ToInt32 (bytes_read));
-
-				//if (body [body.Length - 1] != WebassemblyFunctionEnd)
-					//throw new Exception ("Code section: expression does not have terminating byte");
-
-				//using (BinaryReader bodyReader = new BinaryReader (new MemoryStream (body))) {
-				//}
-				Console.WriteLine ("Parsed code section one {0} locals and code length of {1}", num_locals, length);
 			}
 
 			Console.WriteLine ("Parsed code section done");
