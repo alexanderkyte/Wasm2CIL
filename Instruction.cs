@@ -1,9 +1,14 @@
+using System;
+using System.IO;
+using System.Reflection.Emit;
 
 namespace Wasm2CIL {
 
 	public class WebassemblyInstruction
 	{
-		public static const byte END = 0x0B;
+		public const byte END = 0x0B;
+
+		protected byte opcode;
 
 		public static int BlockDepthDiff (BinaryReader reader) 
 		{
@@ -23,14 +28,16 @@ namespace Wasm2CIL {
 		{
 			byte opcode = reader.ReadByte ();
 
-			if (opcode < WebassemblyControlInstruction.UpperBound ()) {
+			if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
 				return new WebassemblyControlInstruction (reader);
-			} else if (opcode < WebassemblyParametricInstruction.UpperBound ()) {
+			} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
 				return new WebassemblyParametricInstruction (reader);
-			} else if (opcode < WebassemblyMemoryInstruction.UpperBound ()) {
+			} else if (opcode <= WebassemblyMemoryInstruction.UpperBound ()) {
 				return new WebassemblyMemoryInstruction (reader);
-			} else if (opcode < WebassemblyNumericInstruction.UpperBound ()) {
+			} else if (opcode <= WebassemblyNumericInstruction.UpperBound ()) {
 				return new WebassemblyNumericInstruction (reader);
+			} else {
+				throw new Exception (String.Format ("Illegal instruction {0}", opcode));
 			}
 		}
 
@@ -49,10 +56,15 @@ namespace Wasm2CIL {
 		ulong default_target;
 		ulong block_type;
 
+		public static byte UpperBound ()
+		{
+			return 0x11;
+		}
+
 		public WebassemblyControlInstruction (BinaryReader reader) 
 		{
 			this.opcode = reader.ReadByte ();
-			switch (opcode) {
+			switch (this.opcode) {
 				case 0x0: // unreachable
 				case 0x1: // nop
 				case 0x0F: // return
@@ -82,9 +94,14 @@ namespace Wasm2CIL {
 
 	public class WebassemblyParametricInstruction : WebassemblyInstruction
 	{
+		public static byte UpperBound ()
+		{
+			return 0x1B;
+		}
+
 		public WebassemblyParametricInstruction (BinaryReader reader) {
 			this.opcode = reader.ReadByte ();
-			if (opcode != 0x1A && opcode <= 0x1B) {
+			if (this.opcode != 0x1A && this.opcode <= 0x1B) {
 				throw new Exception ("Parametric opcode out of range");
 			}
 		}
@@ -92,11 +109,18 @@ namespace Wasm2CIL {
 
 	public class WebassemblyVariableInstruction : WebassemblyInstruction
 	{
-		public WebassemblyMemoryInstruction (BinaryReader reader) {
+		ulong index;
+
+		public static byte UpperBound ()
+		{
+			return 0x24;
+		}
+
+		public WebassemblyVariableInstruction (BinaryReader reader) {
 			this.opcode = reader.ReadByte ();
-			if (opcode => 0x20 && opcode <= 0x24) {
+			if (this.opcode >= 0x20 && this.opcode <= 0x24) {
 				this.index = Parser.ParseLEBSigned (reader, 32);
-			} else if (opcode > 0x24) {
+			} else if (this.opcode > 0x24) {
 				throw new Exception ("Variable opcode out of range");
 			}
 		}
@@ -104,12 +128,20 @@ namespace Wasm2CIL {
 
 	public class WebassemblyMemoryInstruction : WebassemblyInstruction
 	{
+		ulong align;
+		ulong offset;
+
+		public static byte UpperBound ()
+		{
+			return 0x40;
+		}
+
 		public WebassemblyMemoryInstruction (BinaryReader reader) {
 			this.opcode = reader.ReadByte ();
-			if (opcode => 0x28 && opcode <= 0x3E) {
+			if (this.opcode >= 0x28 && this.opcode <= 0x3E) {
 				this.align = Parser.ParseLEBSigned (reader, 32);
 				this.offset = Parser.ParseLEBSigned (reader, 32);
-			} else if (opcode > 0x40) {
+			} else if (this.opcode > 0x40) {
 				throw new Exception ("Memory opcode out of range");
 			}
 		}
@@ -117,19 +149,26 @@ namespace Wasm2CIL {
 
 	public class WebassemblyNumericInstruction : WebassemblyInstruction
 	{
-		readonly byte opcode;
+		public static byte UpperBound ()
+		{
+			return 0xBF;
+		}
+
 		readonly byte operand;
 		public WebassemblyNumericInstruction (BinaryReader reader) 
 		{
 			this.opcode = reader.ReadByte ();
-			if (opcode => 0x41 && opcode <= 0x44) {
+			if (this.opcode >= 0x41 && this.opcode <= 0x44) {
 
 				//this.operand = reader.ReadByte ();
 				// size of literal varies by type
 
-			} else if (opcode > 0xBF) {
+			} else if (this.opcode > 0xBF) {
 				throw new Exception ("Numerical opcode out of range");
 			}
 		}
 	}
 }
+
+
+
