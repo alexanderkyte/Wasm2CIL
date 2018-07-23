@@ -1,15 +1,27 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 
 namespace Wasm2CIL {
-	
-	public class WebassemblyInstructionBlock
+	public class WebassemblyFunctionBody
 	{
-		public static WebassemblyInstruction [] Parse (BinaryReader reader) 
+		public readonly bool ElseTerminated;
+		public readonly WebassemblyInstruction [] body;
+
+		public void Emit (LocalBuilder [] locals, ILGenerator ilgen)
 		{
-			var accum = new List<WebassemblyInstruction> ();
+			Console.WriteLine ("body length: {0}", body.Length);
+			foreach (var instr in body) {
+				instr.Emit (ilgen, locals);
+			}
+		}
+
+		public WebassemblyFunctionBody (BinaryReader reader) 
+		{
+			var body_builder = new List<WebassemblyInstruction> ();
+			var label_stack = new List<WebassemblyInstruction> ();
 			int depth = 0;
 
 			while (depth >= 0 && (reader.BaseStream.Position != reader.BaseStream.Length)) {
@@ -17,10 +29,20 @@ namespace Wasm2CIL {
 				byte opcode = reader.ReadByte ();
 
 				if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
-					result = new WebassemblyControlInstruction (opcode, reader);
+					// Needs the stack to turn indexes into references to basic blocks
+					result = new WebassemblyControlInstruction (opcode, reader, label_stack);
 
-					depth += ((WebassemblyControlInstruction ) result).DepthChange ();
-
+					if (((WebassemblyControlInstruction) result).StartsBlock ()) {
+						Console.WriteLine ("Start block");
+						depth += 1;
+						label_stack.Add (result);
+					} else if (((WebassemblyControlInstruction) result).EndsBlock ()) {
+						Console.WriteLine ("End block");
+						// Tracks whether we've hit the extra 0x0b that marks end-of-function
+						depth -= 1;
+						if (label_stack.Count > 0)
+							label_stack.RemoveAt (label_stack.Count - 1);
+					} 
 				} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
 					result = new WebassemblyParametricInstruction (opcode, reader);
 				} else if (opcode <= WebassemblyVariableInstruction.UpperBound ()) {
@@ -32,20 +54,26 @@ namespace Wasm2CIL {
 				} else {
 					throw new Exception (String.Format ("Illegal instruction {0:X}", opcode));
 				}
-				accum.Add (result);
-				if (depth > 0)
-					Console.WriteLine ("{0}{1}", new String (' ', depth), result.ToString ());
+
+				if (result != null)
+					body_builder.Add (result);
+
+				if (depth >= 0)
+					Console.WriteLine ("{0}{1}", new String (' ', depth + 1), result.ToString ());
 				else
-					Console.WriteLine ("{0}: END", result.ToString ());
+					Console.WriteLine (" {0}", result.ToString ());
 			}
 
-			return accum.ToArray ();
+			this.body = body_builder.ToArray ();
 		}
 	}
 
+	// Make parser return collection of basic blocks, not instructions
+
 	public abstract class WebassemblyInstruction
 	{
-		public const byte END = 0x0B;
+		public const byte End = 0x0b;
+		public const byte Else = 0x05;
 
 		public readonly byte opcode;
 
@@ -59,9 +87,11 @@ namespace Wasm2CIL {
 			throw new Exception ("Must call instance copy of ToString for WebassemblyInstruction");
 		}
 
-		public void Add (MethodBuilder builder) 
+		public void Emit (ILGenerator ilgen, LocalBuilder [] locals)
 		{
+			ilgen.Emit (OpCodes.Nop);
 			return;
+			//throw new Exception ("Must call instance copy of ToString for WebassemblyInstruction");
 		}
 	}
 
@@ -73,20 +103,12 @@ namespace Wasm2CIL {
 		ulong block_type;
 		ulong function_index;
 		ulong type_index;
+		WebassemblyInstruction dest;
 
-		public int DepthChange () 
-		{
-			if (opcode == 0x0b)
-				return -1;
+		public readonly WebassemblyFunctionBody nested;
+		public readonly WebassemblyFunctionBody else_section;
 
-			// Block, loop, if
-			if (opcode == 0x02 || opcode == 0x03 || opcode == 0x04)
-				return 1;
-
-			// Everything else is unchanged
-			return 0;
-		}
-
+		public int? LabelIndex;
 
 		public override string ToString () 
 		{
@@ -122,28 +144,67 @@ namespace Wasm2CIL {
 			}
 		}
 
+		public bool StartsBlock ()
+		{
+			return opcode == 0x02 || opcode == 0x03 || opcode == 0x04;
+		}
+
+		public bool EndsBlock ()
+		{
+			return opcode == 0x0b;
+		}
+
 		public static byte UpperBound ()
 		{
 			return 0x11;
 		}
 
-		public WebassemblyControlInstruction (byte opcode, BinaryReader reader): base (opcode)
+		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyInstruction> labels): base (opcode)
 		{
 			switch (this.opcode) {
+				case 0x05: // else
+				case 0x0B: // end
+					break;
+					throw new Exception ("Should not encode basic block terminators  in instruction stream");
 				case 0x0: // unreachable
 				case 0x1: // nop
 				case 0x0F: // return
-				case 0x05: // else
+					// No args
 					break;
 				case 0x0C: // br
 				case 0x0D: // br_if
+					// So these indexes are labels
+					// each loop, block, 
+
+					// All branching is to previous labels
+					// This means that the most foolproof way to emit things is
+					// to preverse all the ordering in the initial instruction stream.
+					// When we emit this instruction, dest will already have had a label emitted.
 					this.index = Parser.ParseLEBUnsigned (reader, 32);
+					this.dest = labels [labels.Count - (int) index - 1];
 					break;
+
 				case 0x02: // block
-				case 0x03: // loop 
-				case 0x04: // if
-					this.block_type = Parser.ParseLEBUnsigned (reader, 32);
+					// need to make label 
+					this.block_type = reader.ReadByte ();
+					this.nested = new WebassemblyFunctionBody (reader);
 					break;
+
+				case 0x03: // loop 
+					// need to make label 
+					this.block_type = reader.ReadByte ();
+					this.nested = new WebassemblyFunctionBody (reader);
+					break;
+
+				case 0x04: // if
+					//this.block_type = reader.ReadByte ();
+					//this.nested = new WebassemblyFunctionBody (reader);
+					//if (this.nested.ElseTerminated)
+						//this.else = new WebassemblyFunctionBody (reader);
+					throw new Exception ("Implement me");
+
+					break;
+
 				case 0x0e: // br_table
 					// works by getting index from stack. If index is in range of table,
 					// we jump to the label at that index. Else go to default.
@@ -158,9 +219,6 @@ namespace Wasm2CIL {
 					var endcap = Parser.ParseLEBUnsigned (reader, 32);
 					if (endcap != 0x0)
 						throw new Exception ("Call indirect call not ended with 0x0");
-					break;
-				case 0x0B: // end
-					// foo?
 					break;
 				default:
 					throw new Exception (String.Format ("Control instruction out of range {0:X}", this.opcode));
@@ -180,8 +238,10 @@ namespace Wasm2CIL {
 		{
 			switch (opcode) {
 				case 0x1a:
+					// CIL: pop
 					return "drop";
 				case 0x1b:
+					// CIL: dup + pop
 					return "select";
 				default:
 					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));

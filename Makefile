@@ -3,7 +3,7 @@ all: test
 
 .PHONY: test
 test: Parser.exe factorial.wasm Makefile
-	mono --debug Parser.exe factorial.wasm
+	mono --debug Parser.exe factorial.wasm Factorial
 
 Parser.exe: Parser.cs Makefile Instruction.cs
 	mcs -debug Parser.cs Instruction.cs
