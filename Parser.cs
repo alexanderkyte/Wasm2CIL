@@ -72,6 +72,22 @@ namespace Wasm2CIL {
 		}
 	}
 
+    public class WebassemblyImport
+    {
+        public readonly string module;
+        public readonly string name;
+        public readonly int kind;
+        public readonly ulong index;
+
+        public WebassemblyImport(BinaryReader reader)
+        {
+            module = Parser.ReadString(reader);
+            name = Parser.ReadString(reader);
+            kind = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 7));
+            index = Parser.ParseLEBUnsigned(reader,32);
+        }
+    }
+
 	public class WebassemblyMemory
 	{
 		public readonly WebassemblyLimit limit;
@@ -114,17 +130,10 @@ namespace Wasm2CIL {
         public readonly string name;
         public readonly uint kind;
         public readonly ulong index;
-        
-        private String ReadString(BinaryReader reader)
-        {
-            int length = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
-            char[] chars = reader.ReadChars(length);
-            return new string(chars);
-        }
 
         public WebassemblyExport (BinaryReader reader)
         {
-            name = ReadString(reader);
+            name = Parser.ReadString(reader);
             kind = Convert.ToUInt32(Parser.ParseLEBUnsigned(reader, 8));
             index = Parser.ParseLEBUnsigned(reader, 32);
         }
@@ -240,6 +249,7 @@ namespace Wasm2CIL {
 		WebassemblyTable table;
 		WebassemblyMemory mem;
         WebassemblyExport [] exports;
+        WebassemblyImport [] imports;
 
 		public void ParseTypeSection (BinaryReader reader)
 		{
@@ -344,10 +354,16 @@ namespace Wasm2CIL {
 
 		public void ParseImportSection(BinaryReader reader)
 		{
-			Console.WriteLine ("Parsed Import section");
-		}
+            var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
+            this.imports = new WebassemblyImport [count];
 
-		public void ParseExportSection(BinaryReader reader)
+            for (int i = 0; i < count; i++)
+                this.imports[i] = new WebassemblyImport(reader);
+
+            Console.WriteLine("Parsed import section, {0}", count);
+        }
+
+        public void ParseExportSection(BinaryReader reader)
 		{
             var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
             this.exports = new WebassemblyExport [count];
@@ -423,6 +439,13 @@ namespace Wasm2CIL {
 		public static ulong ParseLEBUnsigned (BinaryReader reader, int size_bits) {
 			return (ulong) ParseLEB (reader, Convert.ToUInt32 (size_bits), false);
 		}
+
+        public static string ReadString(BinaryReader reader)
+        {
+            int length = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
+            char[] chars = reader.ReadChars(length);
+            return new string(chars);
+        }
 
         public static IntPtr ParseLEB (BinaryReader reader, uint size_bits, bool signed)
 		{
