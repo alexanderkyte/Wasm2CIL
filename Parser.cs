@@ -109,6 +109,27 @@ namespace Wasm2CIL {
 		}
 	}
 
+    public class WebassemblyExport
+    {
+        public readonly string name;
+        public readonly uint kind;
+        public readonly ulong index;
+        
+        private String ReadString(BinaryReader reader)
+        {
+            int length = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
+            char[] chars = reader.ReadChars(length);
+            return new string(chars);
+        }
+
+        public WebassemblyExport (BinaryReader reader)
+        {
+            name = ReadString(reader);
+            kind = Convert.ToUInt32(Parser.ParseLEBUnsigned(reader, 8));
+            index = Parser.ParseLEBUnsigned(reader, 32);
+        }
+    }
+
 	public class WebassemblyElementInit
 	{
 		public readonly long index;
@@ -218,6 +239,7 @@ namespace Wasm2CIL {
 		WebassemblyDataInit [] data;
 		WebassemblyTable table;
 		WebassemblyMemory mem;
+        WebassemblyExport [] exports;
 
 		public void ParseTypeSection (BinaryReader reader)
 		{
@@ -327,8 +349,14 @@ namespace Wasm2CIL {
 
 		public void ParseExportSection(BinaryReader reader)
 		{
-			Console.WriteLine ("Parsed Export section");
-		}
+            var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
+            this.exports = new WebassemblyExport [count];
+
+            for (int i = 0; i < count; i++)
+                this.exports[i] = new WebassemblyExport(reader);
+
+            Console.WriteLine("Parsed export section, {0}", count);
+        }
 
 		public void ParseSection (int section_num, byte [] section)
 		{
@@ -396,7 +424,7 @@ namespace Wasm2CIL {
 			return (ulong) ParseLEB (reader, Convert.ToUInt32 (size_bits), false);
 		}
 
-		public static IntPtr ParseLEB (BinaryReader reader, uint size_bits, bool signed)
+        public static IntPtr ParseLEB (BinaryReader reader, uint size_bits, bool signed)
 		{
 			// Taken from pseudocode here: https://en.wikipedia.org/wiki/LEB128
 			ulong result = 0;
@@ -472,6 +500,7 @@ namespace Wasm2CIL {
 			{
 				Console.WriteLine("Error: {0}", ioEx.Message);
 			}
+            Console.ReadKey();
 		}
 	}
 
