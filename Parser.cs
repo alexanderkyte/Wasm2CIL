@@ -22,6 +22,18 @@ namespace Wasm2CIL {
 		public const int Data = 11;
 	}
 
+	public class WebassemblyResult
+	{
+		public static Type Convert (BinaryReader reader)
+		{
+			byte res = reader.ReadByte ();
+			if (res == 0x40)
+				return null;
+			else
+				return WebassemblyValueType.Convert (res);
+		}
+	}
+
 	public static class WebassemblyValueType
 	{
 		public const byte I32 = 0x7F;
@@ -41,7 +53,7 @@ namespace Wasm2CIL {
 				case 0x7C:
 					return typeof (double);
 				default:
-					throw new Exception ("Illegal value type");
+					throw new Exception (String.Format ("Illegal value type {0:X}", key));
 			}
 		}
 	}
@@ -92,11 +104,6 @@ namespace Wasm2CIL {
 
 			throw new Exception ("Illegal local type");
 		}
-	}
-
-
-	public class WebassemblyResult
-	{
 	}
 
 	public class WebassemblyLimit
@@ -237,8 +244,6 @@ namespace Wasm2CIL {
 			}
 
 			expr.Body.Emit (outputLocals, ilgen);
-
-			ilgen.Emit (OpCodes.Ret);
 		}
 	}
 

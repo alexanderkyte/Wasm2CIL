@@ -21,28 +21,32 @@ namespace Wasm2CIL {
 		public WebassemblyFunctionBody (BinaryReader reader) 
 		{
 			var body_builder = new List<WebassemblyInstruction> ();
-			var label_stack = new List<WebassemblyInstruction> ();
+			var label_stack = new List<WebassemblyControlInstruction> ();
 			int depth = 0;
 
-			while (depth >= 0 && (reader.BaseStream.Position != reader.BaseStream.Length)) {
+			// Incremented by control instructions
+			int curr_label = 0;
+
+			while (/*depth >= 0 && */(reader.BaseStream.Position != reader.BaseStream.Length)) {
 				WebassemblyInstruction result = null;
 				byte opcode = reader.ReadByte ();
 
 				if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
 					// Needs the stack to turn indexes into references to basic blocks
-					result = new WebassemblyControlInstruction (opcode, reader, label_stack);
+					var control_result = new WebassemblyControlInstruction (opcode, reader, label_stack, ref curr_label);
 
-					if (((WebassemblyControlInstruction) result).StartsBlock ()) {
+					if (control_result.StartsBlock ()) {
 						Console.WriteLine ("Start block");
 						depth += 1;
-						label_stack.Add (result);
-					} else if (((WebassemblyControlInstruction) result).EndsBlock ()) {
+						label_stack.Add (control_result);
+					} else if (control_result.EndsBlock ()) {
 						Console.WriteLine ("End block");
 						// Tracks whether we've hit the extra 0x0b that marks end-of-function
 						depth -= 1;
 						if (label_stack.Count > 0)
 							label_stack.RemoveAt (label_stack.Count - 1);
 					} 
+					result = control_result;
 				} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
 					result = new WebassemblyParametricInstruction (opcode, reader);
 				} else if (opcode <= WebassemblyVariableInstruction.UpperBound ()) {
@@ -87,7 +91,7 @@ namespace Wasm2CIL {
 			throw new Exception ("Must call instance copy of ToString for WebassemblyInstruction");
 		}
 
-		public void Emit (ILGenerator ilgen, LocalBuilder [] locals)
+		public virtual void Emit (ILGenerator ilgen, LocalBuilder [] locals)
 		{
 			ilgen.Emit (OpCodes.Nop);
 			return;
@@ -97,18 +101,89 @@ namespace Wasm2CIL {
 
 	public class WebassemblyControlInstruction : WebassemblyInstruction
 	{
+		Label label;
+		public readonly int LabelIndex;
+
 		ulong [] table;
 		ulong index;
 		ulong default_target;
-		ulong block_type;
+		Type block_type;
 		ulong function_index;
 		ulong type_index;
-		WebassemblyInstruction dest;
+		WebassemblyControlInstruction dest;
+
+		bool loops;
 
 		public readonly WebassemblyFunctionBody nested;
 		public readonly WebassemblyFunctionBody else_section;
 
-		public int? LabelIndex;
+		public override void Emit (ILGenerator ilgen, LocalBuilder [] locals)
+		{
+			switch (opcode) {
+				case 0x0:
+					// Fixme: make this catchable / offer options at exception time
+					ilgen.ThrowException (typeof (System.ExecutionEngineException));
+					return;
+				case 0x01:
+					ilgen.Emit (OpCodes.Nop);
+					return;
+
+				case 0x02: // block
+					label = ilgen.DefineLabel ();
+					ilgen.MarkLabel (label);
+					return;
+
+				case 0x03: // loop
+					label = ilgen.DefineLabel ();
+					ilgen.MarkLabel (label);
+					return;
+
+				//case 0x04: // if 
+					//return ilgen.Emit (OpCodes.Nop);
+				//case 0x05: // Else
+					//return ilgen.Emit (OpCodes.Nop);
+
+				case 0x0b: // End
+					if (this.dest != null && this.loops) {
+						// jump to dest at end of body
+						ilgen.Emit (OpCodes.Br, this.dest.GetLabel ());
+					} else if (this.dest == null) {
+						// ends function body, has implicit return
+						ilgen.Emit (OpCodes.Ret);
+					} else {
+						ilgen.Emit (OpCodes.Nop);
+					}
+					return;
+
+				// Br
+				case 0x0c:
+					ilgen.Emit (OpCodes.Br, this.dest.GetLabel ());
+					return;
+
+				// Br_if
+				case 0x0d:
+					ilgen.Emit (OpCodes.Brtrue, this.dest.GetLabel ());
+					return;
+
+				// Br_table
+				//case 0x0e:
+					//return ilgen.Emit (OpCodes.Nop);
+
+				case 0x0f:
+					ilgen.Emit (OpCodes.Ret);
+					return;
+
+				//// Call
+				//case 0x10:
+					//return ilgen.Emit (OpCodes.Nop);
+				//case 0x11:
+					//return ilgen.Emit (OpCodes.Nop);
+
+				default:
+					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+			}
+			return;
+		}
 
 		public override string ToString () 
 		{
@@ -126,11 +201,14 @@ namespace Wasm2CIL {
 				case 0x05:
 					return "else";
 				case 0x0b:
-					return "end";
+					if (this.dest == null)
+						return String.Format ("end (Of Function)");
+					else
+						return String.Format ("end {0}", this.dest.GetLabelName ());
 				case 0x0c:
-					return String.Format ("br {0}", index);
+					return String.Format ("br {0}", this.dest.GetLabelName ());
 				case 0x0d:
-					return String.Format ("br_if {0}", index);
+					return String.Format ("br_if {0}", this.dest.GetLabelName ());
 				case 0x0e:
 					return "br_table";
 				case 0x0f:
@@ -142,6 +220,24 @@ namespace Wasm2CIL {
 				default:
 					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
 			}
+		}
+
+		public string GetLabelName ()
+		{
+			if (!this.StartsBlock ())
+				throw new Exception ("Does not create label");
+
+			return String.Format ("@{0}", this.LabelIndex);
+		}
+
+		public Label GetLabel ()
+		{
+			if (label == null && this.StartsBlock ())
+				throw new Exception ("Did not emit label when traversing this instruction");
+			else if (label == null)
+				throw new Exception ("Does not create label");
+			else
+				return label;
 		}
 
 		public bool StartsBlock ()
@@ -159,13 +255,14 @@ namespace Wasm2CIL {
 			return 0x11;
 		}
 
-		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyInstruction> labels): base (opcode)
+		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyControlInstruction> labels, ref int labelIndex): base (opcode)
 		{
 			switch (this.opcode) {
 				case 0x05: // else
 				case 0x0B: // end
+					if (labels.Count > 0)
+						this.dest = labels [labels.Count - 1];
 					break;
-					throw new Exception ("Should not encode basic block terminators  in instruction stream");
 				case 0x0: // unreachable
 				case 0x1: // nop
 				case 0x0F: // return
@@ -182,18 +279,21 @@ namespace Wasm2CIL {
 					// When we emit this instruction, dest will already have had a label emitted.
 					this.index = Parser.ParseLEBUnsigned (reader, 32);
 					this.dest = labels [labels.Count - (int) index - 1];
+					
 					break;
 
 				case 0x02: // block
 					// need to make label 
-					this.block_type = reader.ReadByte ();
-					this.nested = new WebassemblyFunctionBody (reader);
+					this.block_type = WebassemblyResult.Convert (reader);
+					this.LabelIndex = labelIndex++;
+					this.loops = false;
 					break;
 
 				case 0x03: // loop 
 					// need to make label 
-					this.block_type = reader.ReadByte ();
-					this.nested = new WebassemblyFunctionBody (reader);
+					this.block_type = WebassemblyResult.Convert (reader);
+					this.LabelIndex = labelIndex++;
+					this.loops = true;
 					break;
 
 				case 0x04: // if
@@ -655,9 +755,9 @@ namespace Wasm2CIL {
 			if (this.opcode > 0xBF) {
 				throw new Exception ("Numerical opcode out of range");
 			} else if (this.opcode == 0x41) {
-				operand_i32 = Convert.ToInt32 (reader.ReadInt32 ());
+				operand_i32 = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			} else if (this.opcode == 0x42) {
-				operand_i64 = Convert.ToInt64 (reader.ReadInt64 ());
+				operand_i64 = Convert.ToInt64 (Parser.ParseLEBSigned (reader, 64));
 			} else if (this.opcode == 0x43) {
 				operand_f32 = Convert.ToSingle (reader.ReadInt32 ());
 			} else if (this.opcode == 0x44) {
