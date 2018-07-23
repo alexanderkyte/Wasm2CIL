@@ -243,7 +243,7 @@ namespace Wasm2CIL {
 				outputLocals [i] = ilgen.DeclareLocal (ty);
 			}
 
-			expr.Body.Emit (outputLocals, ilgen);
+			expr.Body.Emit (ilgen, param_types.Length);
 		}
 	}
 
