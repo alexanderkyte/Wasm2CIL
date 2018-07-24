@@ -2,6 +2,8 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Wasm2CIL {
 	public static class WebassemblySection
@@ -20,29 +22,88 @@ namespace Wasm2CIL {
 		public const int Data = 11;
 	}
 
+	public class WebassemblyResult
+	{
+		public static Type Convert (BinaryReader reader)
+		{
+			byte res = reader.ReadByte ();
+			if (res == 0x40)
+				return null;
+			else
+				return WebassemblyValueType.Convert (res);
+		}
+	}
+
 	public static class WebassemblyValueType
 	{
 		public const byte I32 = 0x7F;
 		public const byte I64 = 0x7E;
 		public const byte F32 = 0x7D;
 		public const byte F64 = 0x7C;
+
+		public static Type Convert (byte key)
+		{
+			switch (key) {
+				case 0x7F:
+					return typeof (int);
+				case 0x7E:
+					return typeof (long);
+				case 0x7D:
+					return typeof (float);
+				case 0x7C:
+					return typeof (double);
+				default:
+					throw new Exception (String.Format ("Illegal value type {0:X}", key));
+			}
+		}
 	}
 
 	public class WebassemblyLocal
 	{
-		public readonly int size_of_local;
+		public readonly int Count;
 		public readonly int valueTypeInit;
 
-		public WebassemblyLocal (int size_of_local, int valueTypeInit)
+		public WebassemblyLocal (int count, int valueTypeInit)
 		{
-			this.size_of_local = size_of_local;
+			this.Count = count;
 			this.valueTypeInit = valueTypeInit;
 		}
-	}
 
+		public Type GetType () {
+			if (Count == 1) {
+				switch (valueTypeInit) {
+					case WebassemblyValueType.I32:
+						return typeof (int);
+						break;
+					case WebassemblyValueType.I64:
+						return typeof (long);
+						break;
+					case WebassemblyValueType.F32:
+						return typeof (float);
+						break;
+					case WebassemblyValueType.F64:
+						return typeof (double);
+						break;
+				}
+			}
 
-	public class WebassemblyResult
-	{
+			switch (valueTypeInit) {
+				case WebassemblyValueType.I32:
+					return typeof (int);
+					break;
+				case WebassemblyValueType.I64:
+					return typeof (long);
+					break;
+				case WebassemblyValueType.F32:
+					return typeof (float);
+					break;
+				case WebassemblyValueType.F64:
+					return typeof (double);
+					break;
+			}
+
+			throw new Exception ("Illegal local type");
+		}
 	}
 
 	public class WebassemblyLimit
@@ -152,26 +213,52 @@ namespace Wasm2CIL {
 	public class WebassemblyFunc
 	{
 		public readonly WebassemblyLocal [] locals;
+		public readonly int num_locals;
 		public readonly WebassemblyExpression expr;
 
 		public WebassemblyFunc (BinaryReader reader) 
 		{
-			int num_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-			this.locals = new WebassemblyLocal [num_locals];
-			for (int local=0; local < num_locals; local++) {
+			int num_local_types = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			this.locals = new WebassemblyLocal [num_local_types];
+			this.num_locals = 0;
+
+			for (int local=0; local < num_local_types; local++) {
 				// Size of local in count of 32-bit segments
-				int size_of_local = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
+				int count_of_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 				int valueTypeInit = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
-				this.locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
+				this.locals [local] = new WebassemblyLocal (count_of_locals, valueTypeInit);
+				this.num_locals += count_of_locals;
+				Console.WriteLine ("Parsed code section local: Count {0} Type {1}", count_of_locals, valueTypeInit);
 			}
 			Console.WriteLine ("Parsed code section one {0} locals", num_locals);
 			this.expr = new WebassemblyExpression (reader, true);
+		}
+
+		public MethodInfo Emit (WebassemblyFunctionType type, TypeBuilder tb, string name)
+		{
+			var param_types = type.EmitParams ();
+			var return_type = type.EmitReturn ();
+			var method = tb.DefineMethod (name, MethodAttributes.Static | MethodAttributes.Public, return_type, param_types);
+			var ilgen = method.GetILGenerator ();
+
+			var outputLocals = new LocalBuilder [num_locals];
+			var index = 0;
+
+			for (int i=0; i < locals.Length; i++) {
+				var ty = locals [i].GetType ();
+				for (int j=0; j < locals [i].Count; j++)
+					outputLocals [index++] = ilgen.DeclareLocal (ty);
+			}
+
+			expr.Body.Emit (ilgen, param_types.Length);
+
+			return method;
 		}
 	}
 
 	public class WebassemblyExpression
 	{
-		WebassemblyInstruction [] body;
+		public readonly WebassemblyFunctionBody Body;
 
 		public WebassemblyExpression (BinaryReader reader): this (reader, false)
 		{
@@ -179,7 +266,7 @@ namespace Wasm2CIL {
 
 		public WebassemblyExpression (BinaryReader reader, bool readToEnd) 
 		{
-			body = WebassemblyInstructionBlock.Parse (reader);
+			Body = new WebassemblyFunctionBody (reader);
 
 			if (readToEnd && (reader.BaseStream.Position != reader.BaseStream.Length))
 				throw new Exception ("Didn't actually read to end");
@@ -191,6 +278,29 @@ namespace Wasm2CIL {
 		readonly long form;
 		readonly ulong[] parameters;
 		readonly ulong[] results;
+
+		public Type [] EmitParams ()
+		{
+			if (parameters.Length == 0)
+				return null;
+
+			var accum = new List<Type> ();
+			foreach (var res in parameters)
+				accum.Add (WebassemblyValueType.Convert ((byte) res));
+
+			return accum.ToArray ();
+		}
+
+		public Type EmitReturn ()
+		{
+			if (results.Length == 0)
+				return null;
+
+			if (results.Length == 1)
+				return WebassemblyValueType.Convert ((byte) this.results [0]);
+
+			throw new Exception ("Result type array may only have length 1 in this version of Webassembly");
+		}
 
 		public WebassemblyFunctionType (long form, ulong[] parameters, ulong[] results)
 		{
@@ -211,13 +321,49 @@ namespace Wasm2CIL {
 		WebassemblyFunc [] exprs;
 		// function_index_to_type_index_map. fn_to_type [fn_idx] = type_idx
 		ulong [] fn_to_type;
-		ulong start_idx;
+		long start_idx;
 
 		WebassemblyGlobal [] globals;
 		WebassemblyElementInit [] elements;
 		WebassemblyDataInit [] data;
 		WebassemblyTable table;
 		WebassemblyMemory mem;
+
+		// Can only be called after all sections are done parsing
+		public void Emit (string outputName)
+		{
+			var assemblyName = String.Format ("{0}Proxy", outputName);
+			AssemblyName aName = new AssemblyName (assemblyName);
+			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly (aName, AssemblyBuilderAccess.RunAndSave);
+			var outputFileExtension = start_idx == -1 ? ".dll" : ".exe";
+			var outputFileName = assemblyName + outputFileExtension;
+			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, outputFileName);
+
+			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public);
+
+			// fixme: imports / exports?
+			for (int i=0; i < exprs.Length; i++) {
+				var fn = exprs [i];
+				var type = types [fn_to_type [i]];
+				var fn_name = String.Format ("Function{0}", i);
+				var emitted = fn.Emit (type, tb, fn_name);
+
+				var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
+				var dummy_gen = dummy_entry.GetILGenerator ();
+				dummy_gen.Emit(OpCodes.Ldarg, 0);
+				dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
+				dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
+				dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
+				dummy_gen.Emit(OpCodes.Call, emitted);
+				dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
+				dummy_gen.Emit(OpCodes.Ret);
+				ab.SetEntryPoint (dummy_entry);
+
+				tb.CreateType ();
+			}
+
+			ab.Save (outputFileName);
+		}
 
 		public void ParseTypeSection (BinaryReader reader)
 		{
@@ -243,7 +389,7 @@ namespace Wasm2CIL {
 
 		public void ParseStartSection(BinaryReader reader)
 		{
-			start_idx = Parser.ParseLEBUnsigned (reader, 32);
+			start_idx = (long) Parser.ParseLEBUnsigned (reader, 32);
 			Console.WriteLine ("Parse start section:  #index: {0} ", start_idx);
 		}
 
@@ -436,9 +582,15 @@ namespace Wasm2CIL {
 			return (IntPtr) result;
 		}
 
+		public Parser () 
+		{
+			start_idx = -1;
+		}
+
 		public static void Main (string [] args) 
 		{
 			var inputPath = args [0];
+			var outputName = args [1];
 			var parser = new Parser ();
 
 			try
@@ -463,6 +615,8 @@ namespace Wasm2CIL {
 							// asynchronously parse?
 							parser.ParseSection (id, this_section);
 						}
+
+						parser.Emit (outputName);
 					}
 				} else {
 					throw new Exception (String.Format ("Missing file {0}", inputPath));
@@ -474,5 +628,4 @@ namespace Wasm2CIL {
 			}
 		}
 	}
-
 }
