@@ -358,8 +358,8 @@ namespace Wasm2CIL {
 		WebassemblyDataInit [] data;
 		WebassemblyTable table;
 		WebassemblyMemory mem;
-        WebassemblyExport [] exports;
-        WebassemblyImport [] imports;
+		WebassemblyExport [] exports;
+		WebassemblyImport [] imports;
 
 		// Can only be called after all sections are done parsing
 		public void Emit (string outputName)
