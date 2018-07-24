@@ -350,11 +350,12 @@ namespace Wasm2CIL {
 
 				var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
 				var dummy_gen = dummy_entry.GetILGenerator ();
-				dummy_gen.Emit(OpCodes.Ldc_I4_1);
+				dummy_gen.Emit(OpCodes.Ldarg, 0);
+				dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
+				dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
+				dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
 				dummy_gen.Emit(OpCodes.Call, emitted);
-				dummy_gen.Emit(OpCodes.Pop);
-				dummy_gen.Emit(OpCodes.Ldstr, "Hello world");
-				dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (string)}));
+				dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
 				dummy_gen.Emit(OpCodes.Ret);
 				ab.SetEntryPoint (dummy_entry);
 
