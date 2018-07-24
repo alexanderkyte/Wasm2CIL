@@ -500,25 +500,25 @@ namespace Wasm2CIL {
 
 		public void ParseImportSection(BinaryReader reader)
 		{
-            var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
-            this.imports = new WebassemblyImport [count];
+			var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
+			//this.imports = new WebassemblyImport [count];
 
-            for (int i = 0; i < count; i++)
-                this.imports[i] = new WebassemblyImport(reader);
+			//for (int i = 0; i < count; i++)
+				//this.imports[i] = new WebassemblyImport(reader);
 
-            Console.WriteLine("Parsed import section, {0}", count);
-        }
+			Console.WriteLine("Parsed import section, {0}", count);
+		}
 
-        public void ParseExportSection(BinaryReader reader)
+		public void ParseExportSection(BinaryReader reader)
 		{
-            var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
-            this.exports = new WebassemblyExport [count];
+			var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
+			//this.exports = new WebassemblyExport [count];
 
-            for (int i = 0; i < count; i++)
-                this.exports[i] = new WebassemblyExport(reader);
+			//for (int i = 0; i < count; i++)
+				//this.exports[i] = new WebassemblyExport(reader);
 
-            Console.WriteLine("Parsed export section, {0}", count);
-        }
+			Console.WriteLine("Parsed export section, {0}", count);
+		}
 
 		public void ParseSection (int section_num, byte [] section)
 		{
@@ -677,7 +677,7 @@ namespace Wasm2CIL {
 			{
 				Console.WriteLine("Error: {0}", ioEx.Message);
 			}
-            Console.ReadKey();
+            //Console.ReadKey();
 		}
 	}
 }
