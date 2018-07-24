@@ -60,17 +60,17 @@ namespace Wasm2CIL {
 
 	public class WebassemblyLocal
 	{
-		public readonly int count;
+		public readonly int Count;
 		public readonly int valueTypeInit;
 
 		public WebassemblyLocal (int count, int valueTypeInit)
 		{
-			this.count = count;
+			this.Count = count;
 			this.valueTypeInit = valueTypeInit;
 		}
 
 		public Type GetType () {
-			if (count == 1) {
+			if (Count == 1) {
 				switch (valueTypeInit) {
 					case WebassemblyValueType.I32:
 						return typeof (int);
@@ -213,37 +213,46 @@ namespace Wasm2CIL {
 	public class WebassemblyFunc
 	{
 		public readonly WebassemblyLocal [] locals;
+		public readonly int num_locals;
 		public readonly WebassemblyExpression expr;
 
 		public WebassemblyFunc (BinaryReader reader) 
 		{
-			int num_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-			this.locals = new WebassemblyLocal [num_locals];
-			for (int local=0; local < num_locals; local++) {
+			int num_local_types = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+			this.locals = new WebassemblyLocal [num_local_types];
+			this.num_locals = 0;
+
+			for (int local=0; local < num_local_types; local++) {
 				// Size of local in count of 32-bit segments
-				int size_of_local = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
+				int count_of_locals = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
 				int valueTypeInit = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 7));
-				this.locals [local] = new WebassemblyLocal (size_of_local, valueTypeInit);
+				this.locals [local] = new WebassemblyLocal (count_of_locals, valueTypeInit);
+				this.num_locals += count_of_locals;
+				Console.WriteLine ("Parsed code section local: Count {0} Type {1}", count_of_locals, valueTypeInit);
 			}
 			Console.WriteLine ("Parsed code section one {0} locals", num_locals);
 			this.expr = new WebassemblyExpression (reader, true);
 		}
 
-		public void Emit (WebassemblyFunctionType type, TypeBuilder tb, string name)
+		public MethodInfo Emit (WebassemblyFunctionType type, TypeBuilder tb, string name)
 		{
 			var param_types = type.EmitParams ();
 			var return_type = type.EmitReturn ();
-			var method = tb.DefineMethod (name, MethodAttributes.Public, return_type, param_types);
+			var method = tb.DefineMethod (name, MethodAttributes.Static | MethodAttributes.Public, return_type, param_types);
 			var ilgen = method.GetILGenerator ();
 
-			var outputLocals = new LocalBuilder [locals.Length];
+			var outputLocals = new LocalBuilder [num_locals];
+			var index = 0;
 
-			for (int i=0; i < outputLocals.Length; i++) {
+			for (int i=0; i < locals.Length; i++) {
 				var ty = locals [i].GetType ();
-				outputLocals [i] = ilgen.DeclareLocal (ty);
+				for (int j=0; j < locals [i].Count; j++)
+					outputLocals [index++] = ilgen.DeclareLocal (ty);
 			}
 
 			expr.Body.Emit (ilgen, param_types.Length);
+
+			return method;
 		}
 	}
 
@@ -272,11 +281,11 @@ namespace Wasm2CIL {
 
 		public Type [] EmitParams ()
 		{
-			if (results.Length == 0)
+			if (parameters.Length == 0)
 				return null;
 
 			var accum = new List<Type> ();
-			foreach (var res in results)
+			foreach (var res in parameters)
 				accum.Add (WebassemblyValueType.Convert ((byte) res));
 
 			return accum.ToArray ();
@@ -336,8 +345,19 @@ namespace Wasm2CIL {
 			for (int i=0; i < exprs.Length; i++) {
 				var fn = exprs [i];
 				var type = types [fn_to_type [i]];
+				var fn_name = String.Format ("Function{0}", i);
+				var emitted = fn.Emit (type, tb, fn_name);
 
-				fn.Emit (type, tb, String.Format ("Function{0}", i));
+				var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
+				var dummy_gen = dummy_entry.GetILGenerator ();
+				dummy_gen.Emit(OpCodes.Ldc_I4_1);
+				dummy_gen.Emit(OpCodes.Call, emitted);
+				dummy_gen.Emit(OpCodes.Pop);
+				dummy_gen.Emit(OpCodes.Ldstr, "Hello world");
+				dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (string)}));
+				dummy_gen.Emit(OpCodes.Ret);
+				ab.SetEntryPoint (dummy_entry);
+
 				tb.CreateType ();
 			}
 

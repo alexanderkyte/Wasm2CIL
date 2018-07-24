@@ -18,6 +18,14 @@ Parser.exe: Parser.cs Makefile Instruction.cs
 aot: FactorialProxy.dll
 	mono --aot=llvmonly,asmonly,llvm-outfile=tmp.bc FactorialProxy.dll
 
+.PHONY: verify
+verify: FactorialProxy.dll
+	mono --verify-all FactorialProxy.dll
+
+.PHONY: run
+run: FactorialProxy.dll
+	mono --interpreter FactorialProxy.dll
+
 .PHONY: clean
 clean:
 	- rm -rf Parser.exe

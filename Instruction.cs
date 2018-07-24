@@ -39,11 +39,11 @@ namespace Wasm2CIL {
 					var control_result = new WebassemblyControlInstruction (opcode, reader, label_stack, ref curr_label);
 
 					if (control_result.StartsBlock ()) {
-						Console.WriteLine ("Start block");
+						//Console.WriteLine ("Start block");
 						depth += 1;
 						label_stack.Add (control_result);
 					} else if (control_result.EndsBlock ()) {
-						Console.WriteLine ("End block");
+						//Console.WriteLine ("End block");
 						// Tracks whether we've hit the extra 0x0b that marks end-of-function
 						depth -= 1;
 						if (label_stack.Count > 0)
@@ -118,11 +118,11 @@ namespace Wasm2CIL {
 		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
 		{
 			switch (opcode) {
-				case 0x0:
+				case 0x0: // unreachable
 					// Fixme: make this catchable / offer options at exception time
 					ilgen.ThrowException (typeof (System.ExecutionEngineException));
 					return;
-				case 0x01:
+				case 0x01: // nop
 					ilgen.Emit (OpCodes.Nop);
 					return;
 
@@ -142,15 +142,14 @@ namespace Wasm2CIL {
 					//return ilgen.Emit (OpCodes.Nop);
 
 				case 0x0b: // End
-					if (this.dest != null && this.loops) {
-						// jump to dest at end of body
-						ilgen.Emit (OpCodes.Br, this.dest.GetLabel ());
-					} else if (this.dest == null) {
+					// loops fall through
+					if (this.dest == null && !this.loops) {
 						// ends function body, has implicit return
 						ilgen.Emit (OpCodes.Ret);
-					} else {
-						ilgen.Emit (OpCodes.Nop);
 					}
+					//else {
+						//ilgen.Emit (OpCodes.Nop);
+					//}
 					return;
 
 				// Br
@@ -191,9 +190,9 @@ namespace Wasm2CIL {
 				case 0x01:
 					return "nop";
 				case 0x02:
-					return String.Format ("block {0}", block_type);
+					return String.Format ("block {0} {1}", block_type, GetLabelName ());
 				case 0x03:
-					return String.Format ("loop {0}", block_type);
+					return String.Format ("loop {0} {1}", block_type, GetLabelName ());
 				case 0x04:
 					return String.Format ("if {0}", block_type);
 				case 0x05:
@@ -237,6 +236,7 @@ namespace Wasm2CIL {
 			else
 				return label;
 		}
+
 
 		public bool StartsBlock ()
 		{
@@ -370,14 +370,13 @@ namespace Wasm2CIL {
 			// Fixme: use packed encodings (_s) and the opcodes that mention the index
 
 			if ((int) index < num_params) {
-				ilgen.Emit (OpCodes.Ldarg, index);
 				//Console.WriteLine ("ldarg {0}", index);
-				return;
+				ilgen.Emit (OpCodes.Ldarg, index);
+			} else {
+				//Console.WriteLine ("ldloc {0}", labelIndex);
+				int labelIndex = (int) index - num_params;
+				ilgen.Emit (OpCodes.Ldloc, labelIndex);
 			}
-
-			int labelIndex = (int) index - num_params;
-			ilgen.Emit (OpCodes.Ldloc, labelIndex);
-			//Console.WriteLine ("ldloc {0}", labelIndex);
 		}
 
 		void EmitSetter (ILGenerator ilgen, int num_params)
@@ -386,14 +385,13 @@ namespace Wasm2CIL {
 
 			if ((int) index < num_params) {
 				ilgen.Emit (OpCodes.Starg, index);
-			//Console.WriteLine ("starg {0}", index);
+				//Console.WriteLine ("starg {0}", index);
 				return;
+			} else {
+				//Console.WriteLine ("stloc {0}", labelIndex);
+				int labelIndex = (int) index - num_params;
+				ilgen.Emit (OpCodes.Stloc, labelIndex);
 			}
-
-			int labelIndex = (int) index - num_params;
-			ilgen.Emit (OpCodes.Stloc, labelIndex);
-
-			//Console.WriteLine ("stloc {0}", labelIndex);
 		}
 
 		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
@@ -545,7 +543,38 @@ namespace Wasm2CIL {
 		{
 			switch (opcode) {
 				case 0x41:
-					ilgen.Emit (OpCodes.Ldc_I4, operand_i32);
+					switch (operand_i32) {
+						case 0:
+							ilgen.Emit (OpCodes.Ldc_I4_0, operand_i32);
+							break;
+						case 1:
+							ilgen.Emit (OpCodes.Ldc_I4_1, operand_i32);
+							break;
+						case 2:
+							ilgen.Emit (OpCodes.Ldc_I4_2, operand_i32);
+							break;
+						case 3:
+							ilgen.Emit (OpCodes.Ldc_I4_3, operand_i32);
+							break;
+						case 4:
+							ilgen.Emit (OpCodes.Ldc_I4_4, operand_i32);
+							break;
+						case 5:
+							ilgen.Emit (OpCodes.Ldc_I4_5, operand_i32);
+							break;
+						case 6:
+							ilgen.Emit (OpCodes.Ldc_I4_6, operand_i32);
+							break;
+						case 7:
+							ilgen.Emit (OpCodes.Ldc_I4_7, operand_i32);
+							break;
+						case 8:
+							ilgen.Emit (OpCodes.Ldc_I4_8, operand_i32);
+							break;
+						default:
+							ilgen.Emit (OpCodes.Ldc_I4, operand_i32);
+							break;
+					}
 					return;
 				case 0x42:
 					ilgen.Emit (OpCodes.Ldc_I8, operand_i64);
@@ -558,7 +587,7 @@ namespace Wasm2CIL {
 					return;
 
 				case 0x45:
-					ilgen.Emit (OpCodes.Ldc_I4, 0x0);
+					ilgen.Emit (OpCodes.Ldc_I4_0);
 					ilgen.Emit (OpCodes.Ceq);
 					return;
 				case 0x46:
@@ -572,6 +601,7 @@ namespace Wasm2CIL {
 				case 0x48:
 					ilgen.Emit (OpCodes.Clt);
 					return;
+
 				case 0x49:
 					ilgen.Emit (OpCodes.Clt_Un);
 					return;
@@ -579,6 +609,7 @@ namespace Wasm2CIL {
 				case 0x4a:
 					ilgen.Emit (OpCodes.Cgt);
 					return;
+
 				case 0x4b:
 					ilgen.Emit (OpCodes.Cgt_Un);
 					return;
@@ -611,9 +642,7 @@ namespace Wasm2CIL {
 					//return "i64.lt_s";
 				//case 0x54:
 					//return "i64.lt_u";
-				case 0x55:
-					ilgen.Emit (OpCodes.Sub);
-					ilgen.Emit (OpCodes.Ldc_I8, 0);
+				case 0x55: // i64.gt_s
 					ilgen.Emit (OpCodes.Cgt);
 					return;
 
@@ -795,7 +824,7 @@ namespace Wasm2CIL {
 					//return "i32.trunc_u/f64";
 
 				case 0xac:
-					ilgen.Emit (OpCodes.Conv_Ovf_U4);
+					ilgen.Emit (OpCodes.Conv_Ovf_I8);
 					return;
 
 				//case 0xad:
@@ -823,7 +852,7 @@ namespace Wasm2CIL {
 				//case 0xb8:
 					//return "f64.convert_u/i32";
 				case 0xb9:
-					ilgen.Emit (OpCodes.Conv_Ovf_U8);
+					ilgen.Emit (OpCodes.Conv_R8);
 					return;
 
 				//case 0xba:
@@ -1122,7 +1151,7 @@ namespace Wasm2CIL {
 			} else if (this.opcode == 0x41) {
 				operand_i32 = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			} else if (this.opcode == 0x42) {
-				operand_i64 = Convert.ToInt64 (Parser.ParseLEBSigned (reader, 64));
+				operand_i64 = Parser.ParseLEBSigned (reader, 64);
 			} else if (this.opcode == 0x43) {
 				operand_f32 = reader.ReadSingle ();
 			} else if (this.opcode == 0x44) {
