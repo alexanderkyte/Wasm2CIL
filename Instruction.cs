@@ -5,51 +5,95 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 
 namespace Wasm2CIL {
-	public class WebassemblyFunctionBody
+	public class WebassemblyCodeParser
 	{
 		public readonly bool ElseTerminated;
-		public readonly WebassemblyInstruction [] body;
+		public WebassemblyInstruction [] body;
+
+		private bool finished;
 
 		public int ParamCount;
 
 		public void Emit (ILGenerator ilgen, int num_params)
 		{
+			Console.WriteLine ("Emitting the following instructions");
+			foreach (var instr in body)
+				Console.WriteLine (instr.ToString ());
+
 			this.ParamCount = num_params;
-			Console.WriteLine ("body length: {0}", body.Length);
-			foreach (var instr in body) {
-				instr.Emit (ilgen, this);
+			var iter = BodyBuilder.GetEnumerator ();
+
+			while (true) {
+				var valid = iter.MoveNext ();
+				if (!valid)
+					break;
+
+				((WebassemblyInstruction) iter.Current).Emit (iter, ilgen, this);
 			}
 		}
 
-		public WebassemblyFunctionBody (BinaryReader reader)
+		public void Add (WebassemblyInstruction instr) {
+			BodyBuilder.Add (instr);
+		}
+
+		private int CurrLabel; // Incremented by control instructions
+		private List<WebassemblyInstruction> BodyBuilder;
+		private List<WebassemblyControlInstruction> LabelStack;
+
+		public WebassemblyCodeParser () {
+			BodyBuilder = new List<WebassemblyInstruction> ();
+			LabelStack = new List<WebassemblyControlInstruction> ();
+			CurrLabel = 0;
+		}
+
+		public WebassemblyCodeParser (BinaryReader reader): this () {
+			ParseExpression (reader);
+			FinishParsing ();
+		}
+
+		public WebassemblyInstruction Current ()
 		{
-			var body_builder = new List<WebassemblyInstruction> ();
-			var label_stack = new List<WebassemblyControlInstruction> ();
+			return this.BodyBuilder [this.BodyBuilder.Count - 1];
+		}
+
+		public void ParseExpression (BinaryReader reader)
+		{
+			Console.WriteLine ("New parsing stack!");
+
+			int start = BodyBuilder.Count;
+
+			if (this.finished)
+				throw new Exception ("Expression block has already been finalized.");
+
+			// The "depth" is used to find the extra 0x0B at the end of an expression.
+			// When we see it and depth != 0, then it ends a block, not the function
+			//
+			// We make the nested blocks in if/else bodies without labels parse with
+			// the included logic as well, so an Else can also end this block
 			int depth = 0;
 
-			// Incremented by control instructions
-			int curr_label = 0;
-
-			while (/*depth >= 0 && */(reader.BaseStream.Position != reader.BaseStream.Length)) {
+			while (depth >= 0 && (reader.BaseStream.Position != reader.BaseStream.Length)) {
 				WebassemblyInstruction result = null;
 				byte opcode = reader.ReadByte ();
 
 				if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
 					// Needs the stack to turn indexes into references to basic blocks
-					var control_result = new WebassemblyControlInstruction (opcode, reader, label_stack, ref curr_label);
+					var control_result = new WebassemblyControlInstruction (opcode, reader, LabelStack, ref CurrLabel, this);
 
 					if (control_result.StartsBlock ()) {
 						//Console.WriteLine ("Start block");
 						depth += 1;
-						label_stack.Add (control_result);
+						LabelStack.Add (control_result);
 					} else if (control_result.EndsBlock ()) {
 						//Console.WriteLine ("End block");
 						// Tracks whether we've hit the extra 0x0b that marks end-of-function
 						depth -= 1;
-						if (label_stack.Count > 0)
-							label_stack.RemoveAt (label_stack.Count - 1);
+						if (LabelStack.Count > 0)
+							LabelStack.RemoveAt (LabelStack.Count - 1);
 					} 
-					result = control_result;
+
+					// The appending is done inside the control instruction so that it can ensure ordering
+					result = null;
 				} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
 					result = new WebassemblyParametricInstruction (opcode, reader);
 				} else if (opcode <= WebassemblyVariableInstruction.UpperBound ()) {
@@ -63,15 +107,21 @@ namespace Wasm2CIL {
 				}
 
 				if (result != null)
-					body_builder.Add (result);
+					BodyBuilder.Add (result);
 
-				if (depth >= 0)
-					Console.WriteLine ("{0}{1}", new String (' ', depth + 1), result.ToString ());
-				else
-					Console.WriteLine (" {0}", result.ToString ());
+				//if (depth >= 0)
+					//Console.WriteLine ("{0}{1}", new String (' ', depth + 1), result.ToString ());
+				//else
+					//Console.WriteLine (" {0}", result.ToString ());
 			}
 
-			this.body = body_builder.ToArray ();
+			Console.WriteLine ("Parsed {0} wasm instructions", BodyBuilder.Count - start);
+		}
+
+		public void FinishParsing ()
+		{
+			this.body = BodyBuilder.ToArray ();
+			this.finished = true;
 		}
 	}
 
@@ -82,19 +132,15 @@ namespace Wasm2CIL {
 		public const byte End = 0x0b;
 		public const byte Else = 0x05;
 
-		public readonly byte opcode;
+		public readonly byte Opcode;
 
 		public WebassemblyInstruction (byte opcode)
 		{
-			this.opcode = opcode;
+			this.Opcode = opcode;
 		}
 
-		public virtual string ToString () 
-		{
-			throw new Exception ("Must call instance copy of ToString for WebassemblyInstruction");
-		}
-
-		public abstract void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level);
+		public abstract string ToString ();
+		public abstract void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level);
 	}
 
 	public class WebassemblyControlInstruction : WebassemblyInstruction
@@ -112,12 +158,14 @@ namespace Wasm2CIL {
 
 		bool loops;
 
-		public readonly WebassemblyFunctionBody nested;
-		public readonly WebassemblyFunctionBody else_section;
+		// These are the expressions that are the
+		public readonly WebassemblyControlInstruction if_block;
+		public readonly WebassemblyControlInstruction else_block;
+		public readonly WebassemblyControlInstruction fallthrough_block;
 
-		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
+		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x0: // unreachable
 					// Fixme: make this catchable / offer options at exception time
 					ilgen.ThrowException (typeof (System.ExecutionEngineException));
@@ -136,8 +184,72 @@ namespace Wasm2CIL {
 					ilgen.MarkLabel (label);
 					return;
 
-				//case 0x04: // if 
-					//return ilgen.Emit (OpCodes.Nop);
+				case 0x04: // if 
+					var fallthrough_label = ilgen.DefineLabel ();
+
+					WebassemblyInstruction curr = cursor.Current;
+					if (curr != this)
+						throw new Exception (String.Format ("Cursor has passed us while we were emitting instruction"));
+					if (curr != if_block)
+						throw new Exception (String.Format ("if block limits not correctly parsed"));
+
+					if (this.else_block != null) {
+						Label else_label = ilgen.DefineLabel ();
+						ilgen.Emit (OpCodes.Brfalse, else_label);
+
+						Console.WriteLine ("GREP: if: {0}", this.if_block.ToString ());
+						Console.WriteLine ("GREP: else: {0}", this.else_block.ToString ());
+						Console.WriteLine ("GREP: fallthrough: {0}", this.fallthrough_block.ToString ());
+
+						while (curr != this.else_block) {
+							var good = cursor.MoveNext ();
+							if (!good)
+								throw new Exception ("if/else block limits not correctly parsed");
+							curr = cursor.Current;
+							curr.Emit (cursor, ilgen, top_level);
+						}
+						if (if_block == else_block)
+							ilgen.Emit (OpCodes.Nop);
+
+						ilgen.Emit (OpCodes.Br, fallthrough_label);
+
+
+						// We emit the else block
+						ilgen.MarkLabel (else_label);
+						while (curr != this.fallthrough_block) {
+							var good = cursor.MoveNext ();
+							if (!good)
+								throw new Exception ("Else/fallthrough block limits not correctly parsed");
+							curr = cursor.Current;
+							curr.Emit (cursor, ilgen, top_level);
+						}
+						if (else_block == fallthrough_block)
+							ilgen.Emit (OpCodes.Nop);
+
+						// Falls through to fallthrough by default
+					} else {
+						// No else block
+
+						Console.WriteLine ("GREP: if: {0}", this.if_block.ToString ());
+						Console.WriteLine ("GREP: fallthrough: {0}", this.fallthrough_block.ToString ());
+
+						ilgen.Emit (OpCodes.Brfalse, fallthrough_label);
+						if (if_block == fallthrough_block)
+							ilgen.Emit (OpCodes.Nop);
+						while (curr != this.fallthrough_block) {
+								Console.WriteLine ("Between if and fallthrough: {0} < {1}", cursor.Current.ToString (), fallthrough_block.ToString ());
+								var good = cursor.MoveNext ();
+								if (!good)
+									throw new Exception ("if/fallthrough block limits not correctly parsed");
+								curr = cursor.Current;
+								curr.Emit (cursor, ilgen, top_level);
+						}
+					}
+
+					// Start fallthrough symbol, for rest of code
+					ilgen.MarkLabel (fallthrough_label);
+					return;
+
 				//case 0x05: // Else
 					//return ilgen.Emit (OpCodes.Nop);
 
@@ -177,14 +289,14 @@ namespace Wasm2CIL {
 					//return ilgen.Emit (OpCodes.Nop);
 
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 			return;
 		}
 
 		public override string ToString () 
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x0:
 					return "unreachable";
 				case 0x01:
@@ -194,7 +306,7 @@ namespace Wasm2CIL {
 				case 0x03:
 					return String.Format ("loop {0} {1}", block_type, GetLabelName ());
 				case 0x04:
-					return String.Format ("if {0}", block_type);
+					return String.Format ("if Type: {0}", block_type);
 				case 0x05:
 					return "else";
 				case 0x0b:
@@ -215,7 +327,7 @@ namespace Wasm2CIL {
 				case 0x11:
 					return String.Format ("call_indirect {0}", this.type_index);
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
@@ -240,12 +352,12 @@ namespace Wasm2CIL {
 
 		public bool StartsBlock ()
 		{
-			return opcode == 0x02 || opcode == 0x03 || opcode == 0x04;
+			return Opcode == 0x02 || Opcode == 0x03 || Opcode == 0x04;
 		}
 
 		public bool EndsBlock ()
 		{
-			return opcode == 0x0b;
+			return Opcode == 0x0b || Opcode == 0x05;
 		}
 
 		public static byte UpperBound ()
@@ -253,13 +365,17 @@ namespace Wasm2CIL {
 			return 0x11;
 		}
 
-		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyControlInstruction> labels, ref int labelIndex): base (opcode)
+		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyControlInstruction> labels, ref int labelIndex, WebassemblyCodeParser parser): base (opcode)
 		{
-			switch (this.opcode) {
+			// Ensure this opcode comes before nested/subsequent blocks
+			parser.Add (this);
+
+			switch (this.Opcode) {
 				case 0x05: // else
 				case 0x0B: // end
-					if (labels.Count > 0)
-						this.dest = labels [labels.Count - 1];
+					var index = labels.Count - 1;
+					if (index < labels.Count && index > 0)
+						this.dest = labels [index];
 					break;
 				case 0x0: // unreachable
 				case 0x1: // nop
@@ -276,7 +392,15 @@ namespace Wasm2CIL {
 					// to preverse all the ordering in the initial instruction stream.
 					// When we emit this instruction, dest will already have had a label emitted.
 					this.index = Parser.ParseLEBUnsigned (reader, 32);
-					this.dest = labels [labels.Count - (int) index - 1];
+
+					if (labels.Count == 0)
+						throw new Exception ("Branching with empty label stack!");
+
+					int offset = (labels.Count - 1) - (int) this.index;
+					if (offset >= labels.Count || offset < 0)
+						throw new Exception (String.Format ("branch label of {0} {1} {2} not acceptable", labels.Count, this.index, offset));
+
+					this.dest = labels [offset];
 					
 					break;
 
@@ -295,11 +419,26 @@ namespace Wasm2CIL {
 					break;
 
 				case 0x04: // if
-					//this.block_type = reader.ReadByte ();
-					//this.nested = new WebassemblyFunctionBody (reader);
-					//if (this.nested.ElseTerminated)
-						//this.else = new WebassemblyFunctionBody (reader);
-					throw new Exception ("Implement me");
+					this.block_type = WebassemblyResult.Convert (reader);
+
+					// We have a stack of "expressions" we are writing to
+					//public readonly WebassemblyInstruction [] body;
+
+					this.if_block = this;
+					parser.ParseExpression (reader);
+
+					if (parser.Current ().Opcode == 0x05) {
+						this.else_block = (WebassemblyControlInstruction) parser.Current ();
+						this.else_block.dest = this.if_block;
+						Console.WriteLine ("Else is {0}", this.else_block.ToString ());
+						parser.ParseExpression (reader);
+					} else if (parser.Current ().Opcode != 0x0B) {
+						throw new Exception (String.Format ("If statement terminated with illegal opcode 0x0{0:X}", parser.Current ().Opcode));
+					}
+
+					this.fallthrough_block = (WebassemblyControlInstruction) parser.Current ();
+					this.fallthrough_block.dest = this.if_block;
+					Console.WriteLine ("Fallthrough is {0}", this.fallthrough_block.ToString ());
 
 					break;
 
@@ -319,9 +458,8 @@ namespace Wasm2CIL {
 						throw new Exception ("Call indirect call not ended with 0x0");
 					break;
 				default:
-					throw new Exception (String.Format ("Control instruction out of range {0:X}", this.opcode));
+					throw new Exception (String.Format ("Control instruction out of range {0:X}", this.Opcode));
 			}
-			
 		}
 	}
 
@@ -332,14 +470,14 @@ namespace Wasm2CIL {
 			return 0x1B;
 		}
 
-		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
+		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+			throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 		}
 
 		public override string ToString () 
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x1a:
 					// CIL: pop
 					return "drop";
@@ -347,13 +485,13 @@ namespace Wasm2CIL {
 					// CIL: dup + pop
 					return "select";
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
 		public WebassemblyParametricInstruction (byte opcode, BinaryReader reader): base (opcode)
 		{
-			if (this.opcode != 0x1A && this.opcode <= 0x1B) {
+			if (this.Opcode != 0x1A && this.Opcode <= 0x1B) {
 				throw new Exception ("Parametric opcode out of range");
 			}
 		}
@@ -394,9 +532,9 @@ namespace Wasm2CIL {
 			}
 		}
 
-		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
+		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x20:
 					EmitGetter (ilgen, top_level.ParamCount);
 					return;
@@ -412,13 +550,13 @@ namespace Wasm2CIL {
 				//case 0x24:
 					//return String.Format ("set_global {0}", index);
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
 		public override string ToString () 
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x20:
 					return String.Format ("get_local {0}", index);
 				case 0x21:
@@ -430,7 +568,7 @@ namespace Wasm2CIL {
 				case 0x24:
 					return String.Format ("set_global {0}", index);
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
@@ -441,9 +579,9 @@ namespace Wasm2CIL {
 
 		public WebassemblyVariableInstruction (byte opcode, BinaryReader reader): base (opcode)
 		{
-			if (this.opcode >= 0x20 && this.opcode <= 0x24) {
+			if (this.Opcode >= 0x20 && this.Opcode <= 0x24) {
 				this.index = Parser.ParseLEBUnsigned (reader, 32);
-			} else if (this.opcode > 0x24) {
+			} else if (this.Opcode > 0x24) {
 				throw new Exception ("Variable opcode out of range");
 			}
 		}
@@ -454,14 +592,14 @@ namespace Wasm2CIL {
 		ulong align;
 		ulong offset;
 
-		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
+		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+			throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 		}
 
 		public override string ToString () 
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x28:
 					return "i32.load";
 				case 0x29:
@@ -513,7 +651,7 @@ namespace Wasm2CIL {
 				case 0x40:
 					return "grow_memory";
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
@@ -524,14 +662,14 @@ namespace Wasm2CIL {
 
 		public WebassemblyMemoryInstruction (byte opcode, BinaryReader reader): base (opcode)
 		{
-			if (this.opcode >= 0x28 && this.opcode <= 0x3E) {
+			if (this.Opcode >= 0x28 && this.Opcode <= 0x3E) {
 				this.align = Parser.ParseLEBUnsigned (reader, 32);
 				this.offset = Parser.ParseLEBUnsigned (reader, 32);
-			} else if (this.opcode == 0x3F || this.opcode == 0x40) {
+			} else if (this.Opcode == 0x3F || this.Opcode == 0x40) {
 				var endcap = reader.ReadByte ();
 				if (endcap != 0x0)
 					throw new Exception ("Memory size instruction lackend null endcap");
-			} else if (this.opcode > 0x40) {
+			} else if (this.Opcode > 0x40) {
 				throw new Exception ("Memory opcode out of range");
 			}
 		}
@@ -539,9 +677,9 @@ namespace Wasm2CIL {
 
 	public class WebassemblyNumericInstruction : WebassemblyInstruction
 	{
-		public override void Emit (ILGenerator ilgen, WebassemblyFunctionBody top_level)
+		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x41:
 					switch (operand_i32) {
 						case 0:
@@ -687,12 +825,15 @@ namespace Wasm2CIL {
 					//return "i32.ctz";
 				//case 0x69:
 					//return "i32.popcnt";
-				//case 0x6a:
-					//return "i32.add";
-				//case 0x6b:
-					//return "i32.sub";
-				//case 0x6c:
-					//return "i32.mul";
+				case 0x6a:
+					ilgen.Emit (OpCodes.Add);
+					return;
+				case 0x6b:
+					ilgen.Emit (OpCodes.Sub);
+					return;
+				case 0x6c:
+					ilgen.Emit (OpCodes.Mul);
+					return;
 				//case 0x6d:
 					//return "i32.div_s";
 				//case 0x6e:
@@ -701,6 +842,7 @@ namespace Wasm2CIL {
 					//return "i32.rem_s";
 				//case 0x70:
 					//return "i32.rem_u";
+
 				//case 0x71:
 					//return "i32.and";
 				//case 0x72:
@@ -868,13 +1010,13 @@ namespace Wasm2CIL {
 				//case 0xbf:
 					//return "f64.reinterpret/i64";
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
 		public override string ToString () 
 		{
-			switch (opcode) {
+			switch (Opcode) {
 				case 0x41:
 					return String.Format ("i32.const {0}", operand_i32);
 				case 0x42:
@@ -1130,7 +1272,7 @@ namespace Wasm2CIL {
 				case 0xbf:
 					return "f64.reinterpret/i64";
 				default:
-					throw new Exception (String.Format("Should not be reached: {0:X}", opcode));
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
 		}
 
@@ -1146,15 +1288,15 @@ namespace Wasm2CIL {
 
 		public WebassemblyNumericInstruction (byte opcode, BinaryReader reader): base (opcode)
 		{
-			if (this.opcode > 0xBF) {
+			if (this.Opcode > 0xBF) {
 				throw new Exception ("Numerical opcode out of range");
-			} else if (this.opcode == 0x41) {
+			} else if (this.Opcode == 0x41) {
 				operand_i32 = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-			} else if (this.opcode == 0x42) {
+			} else if (this.Opcode == 0x42) {
 				operand_i64 = Parser.ParseLEBSigned (reader, 64);
-			} else if (this.opcode == 0x43) {
+			} else if (this.Opcode == 0x43) {
 				operand_f32 = reader.ReadSingle ();
-			} else if (this.opcode == 0x44) {
+			} else if (this.Opcode == 0x44) {
 				operand_f64 = reader.ReadDouble ();
 			}
 		}

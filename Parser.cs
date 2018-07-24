@@ -280,7 +280,7 @@ namespace Wasm2CIL {
 					outputLocals [index++] = ilgen.DeclareLocal (ty);
 			}
 
-			expr.Body.Emit (ilgen, param_types.Length);
+			expr.Body.Emit (ilgen, param_types != null ? param_types.Length : 0);
 
 			return method;
 		}
@@ -288,7 +288,7 @@ namespace Wasm2CIL {
 
 	public class WebassemblyExpression
 	{
-		public readonly WebassemblyFunctionBody Body;
+		public readonly WebassemblyCodeParser Body;
 
 		public WebassemblyExpression (BinaryReader reader): this (reader, false)
 		{
@@ -296,7 +296,7 @@ namespace Wasm2CIL {
 
 		public WebassemblyExpression (BinaryReader reader, bool readToEnd) 
 		{
-			Body = new WebassemblyFunctionBody (reader);
+			Body = new WebassemblyCodeParser (reader);
 
 			if (readToEnd && (reader.BaseStream.Position != reader.BaseStream.Length))
 				throw new Exception ("Didn't actually read to end");
@@ -380,19 +380,18 @@ namespace Wasm2CIL {
 				var fn_name = String.Format ("Function{0}", i);
 				var emitted = fn.Emit (type, tb, fn_name);
 
-				var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
-				var dummy_gen = dummy_entry.GetILGenerator ();
-				dummy_gen.Emit(OpCodes.Ldarg, 0);
-				dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
-				dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
-				dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
-				dummy_gen.Emit(OpCodes.Call, emitted);
-				dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
-				dummy_gen.Emit(OpCodes.Ret);
-				ab.SetEntryPoint (dummy_entry);
-
-				tb.CreateType ();
+				//var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
+				//var dummy_gen = dummy_entry.GetILGenerator ();
+				//dummy_gen.Emit(OpCodes.Ldarg, 0);
+				//dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
+				//dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
+				//dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
+				//dummy_gen.Emit(OpCodes.Call, emitted);
+				//dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
+				//dummy_gen.Emit(OpCodes.Ret);
+				//ab.SetEntryPoint (dummy_entry);
 			}
+			tb.CreateType ();
 
 			ab.Save (outputFileName);
 		}
@@ -431,7 +430,7 @@ namespace Wasm2CIL {
 			exprs = new WebassemblyFunc [count];
 
 			for (int i=0; i < count; i++) {
-				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBSigned (sectionReader, 32));
+				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBUnsigned (sectionReader, 32));
 				// doing now so I can parallelize lower parsing later
 				byte [] entry = sectionReader.ReadBytes (size_of_entry);
 
@@ -468,10 +467,10 @@ namespace Wasm2CIL {
 		public void ParseGlobalSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-			this.globals = new WebassemblyGlobal [count];
+			//this.globals = new WebassemblyGlobal [count];
 
-			for (int i=0; i < count; i++)
-				this.globals [i] = new WebassemblyGlobal (reader);
+			//for (int i=0; i < count; i++)
+				//this.globals [i] = new WebassemblyGlobal (reader);
 
 			Console.WriteLine ("Parsed global section, {0}", count);
 		}
@@ -479,10 +478,10 @@ namespace Wasm2CIL {
 		public void ParseElementSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
-			this.elements = new WebassemblyElementInit [count];
+			//this.elements = new WebassemblyElementInit [count];
 
-			for (int i=0; i < count; i++)
-				this.elements [i] = new WebassemblyElementInit (reader);
+			//for (int i=0; i < count; i++)
+				//this.elements [i] = new WebassemblyElementInit (reader);
 
 			Console.WriteLine ("Parsed element section, {0}", count);
 		}

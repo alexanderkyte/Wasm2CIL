@@ -1,0 +1,610 @@
+Mono: Config attempting to parse: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/../etc/mono/config'.
+Mono: Config attempting to parse: '/Users/akyte/.mono/config'.
+Mono: process_set_name: using [../../Parser.exe] as prog name
+Mono: mono_w32handle_new: create Process handle 0x7fd6e8800008
+Mono: Assembly Loader probing location: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll'.
+Mono: Image addref mscorlib[0x7fd6e7e093d0] -> /Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll[0x7fd6e8820200]: 2
+Mono: Prepared to set up assembly 'mscorlib' (/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll)
+Mono: AOT: module /Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll.dylib wants to load image 0: mscorlib
+Mono: Found assembly remapping for mscorlib and was for the same version 4.0.0.0
+Mono: Found assembly remapping for mscorlib and was for the same version 4.0.0.0
+Mono: Assembly Loader probing location: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll'.
+Mono: AOT: image '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll.dylib' found.
+Mono: Assembly Loader loaded assembly from location: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll'.
+Mono: Config attempting to parse: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/4.5/mscorlib.dll.config'.
+Mono: Config attempting to parse: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/../etc/mono/assemblies/mscorlib/mscorlib.config'.
+Mono: AOT: FOUND method System.OutOfMemoryException:.ctor (string) [0x1050aa860 - 0x1050aa882 0x105430304]
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) <Module>:runtime_invoke_void__this___object (object,intptr,intptr,intptr).
+Mono: AOT: FOUND method System.SystemException:.ctor (string) [0x1050c2e60 - 0x1050c2e82 0x105430cfb]
+Mono: AOT: FOUND method System.Exception:.cctor () [0x10508f6d0 - 0x10508f6f7 0x10542f789]
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) object:runtime_invoke_void (object,intptr,intptr,intptr).
+Mono: AOT NOT FOUND: (wrapper alloc) object:AllocSmall (intptr,intptr).
+Mono: AOT: FOUND method System.Exception:.ctor (string) [0x10508dd50 - 0x10508dd8f 0x10542f60e]
+Mono: AOT: FOUND method System.Exception:Init () [0x10508dcc0 - 0x10508dd24 0x10542f602]
+Mono: AOT: FOUND method System.NullReferenceException:.ctor (string) [0x1050a7740 - 0x1050a7762 0x105430242]
+Mono: AOT: FOUND method System.StackOverflowException:.ctor (string) [0x1050b8140 - 0x1050b8162 0x105430a0e]
+Mono: Assembly mscorlib[0x7fd6e7e093d0] added to domain Parser.exe, ref_count=1
+Mono: Assembly Loader probing location: '../../Parser.exe'.
+Mono: Image addref Parser[0x7fd6e7e1c8e0] -> /Users/akyte/Wasm2CIL/Parser.exe[0x7fd6e881fa00]: 3
+Mono: Prepared to set up assembly 'Parser' (/Users/akyte/Wasm2CIL/Parser.exe)
+Mono: Assembly Parser[0x7fd6e7e1c8e0] added to domain Parser.exe, ref_count=1
+Mono: AOT: image '/Users/akyte/Wasm2CIL/Parser.exe.dylib' not found: dlopen(/Users/akyte/Wasm2CIL/Parser.exe.dylib, 9): image not found
+Mono: AOT: image '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/aot-cache/amd64/Parser.exe.dylib' not found: dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/aot-cache/amd64/Parser.exe.dylib, 9): image not found
+Mono: Image '/Users/akyte/Wasm2CIL/Parser.exe' has no debug directory.
+Mono: Assembly Loader loaded assembly from location: '../../Parser.exe'.
+Mono: Config attempting to parse: '/Users/akyte/Wasm2CIL/Parser.exe.config'.
+Mono: Config attempting to parse: '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/../etc/mono/assemblies/Parser/Parser.config'.
+Mono: Assembly Loader probing location: '../../Parser.exe'.
+Mono: AOT: image '/Users/akyte/Wasm2CIL/Parser.exe.dylib' not found: dlopen(/Users/akyte/Wasm2CIL/Parser.exe.dylib, 9): image not found
+Mono: AOT: image '/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/aot-cache/amd64/Parser.exe.dylib' not found: dlopen(/Library/Frameworks/Mono.framework/Versions/5.12.0/lib/mono/aot-cache/amd64/Parser.exe.dylib, 9): image not found
+Mono: Found assembly remapping for mscorlib and was for the same version 4.0.0.0
+Mono: Found assembly remapping for mscorlib and was for the same version 4.0.0.0
+Mono: Assembly Ref addref Parser[0x7fd6e7e1c8e0] -> mscorlib[0x7fd6e7e093d0]: 2
+Mono: AOT: FOUND method System.IO.File:Exists (string) [0x105219680 - 0x105219706 0x105439fb5]
+Mono: AOT: FOUND method string:IsNullOrWhiteSpace (string) [0x1050b9cc0 - 0x1050b9d3c 0x105430a68]
+Mono: AOT: FOUND method char:.cctor () [0x10506f6a0 - 0x10506f6e4 0x10542e106]
+Mono: AOT NOT FOUND: (wrapper alloc) object:AllocVector (intptr,intptr).
+Mono: AOT: FOUND method string:memcpy (byte*,byte*,int) [0x1050c1b50 - 0x1050c1b6c 0x105430c3e]
+Mono: AOT: FOUND method System.Buffer:Memcpy (byte*,byte*,int) [0x10506bf30 - 0x10506c01c 0x10542dec7]
+Mono: AOT: FOUND method System.Buffer:memcpy4 (byte*,byte*,int) [0x10506bc50 - 0x10506bd4b 0x10542dec1]
+Mono: AOT: FOUND method char:IsWhiteSpace (char) [0x10506cf40 - 0x10506cf88 0x10542df82]
+Mono: AOT: FOUND method char:IsWhiteSpaceLatin1 (char) [0x10506cef0 - 0x10506cf31 0x10542df7d]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) object:__icall_wrapper_mono_generic_class_init (intptr).
+Mono: AOT: FOUND method System.IO.Path:.cctor () [0x105223140 - 0x1052232c7 0x10543a515]
+Mono: AOT: FOUND method System.Buffer:memcpy1 (byte*,byte*,int) [0x10506be50 - 0x10506bf26 0x10542dec5]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_VolumeSeparatorChar ().
+Mono: AOT: FOUND method System.IO.MonoIO:.cctor () [0x105220c10 - 0x105220c58 0x10543a37b]
+Mono: AOT: FOUND method System.Environment:GetEnvironmentVariable (string) [0x1050e3300 - 0x1050e3312 0x105431ba0]
+Mono: AOT: FOUND method System.Environment:internalGetEnvironmentVariable (string) [0x1050e3230 - 0x1050e32f8 0x105431b9d]
+Mono: AOT: FOUND method Mono.SafeStringMarshal:get_Value () [0x104fd16f0 - 0x104fd173d 0x10542a694]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) Mono.SafeStringMarshal:StringToUtf8 (string).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Environment:internalGetEnvironmentVariable_native (intptr).
+Mono: AOT: FOUND method string:memset (byte*,int,int) [0x1050c1a20 - 0x1050c1b48 0x105430c3c]
+Mono: AOT: FOUND method Mono.SafeStringMarshal:Dispose () [0x104fd1740 - 0x104fd178e 0x10542a697]
+Mono: AOT: FOUND method intptr:op_Inequality (intptr,intptr) [0x1050ed400 - 0x1050ed42d 0x105432480]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) Mono.SafeStringMarshal:GFree (intptr).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_DirectorySeparatorChar ().
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_AltDirectorySeparatorChar ().
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_PathSeparator ().
+Mono: AOT: FOUND method System.IO.Path:GetInvalidPathChars () [0x105222f20 - 0x105222f81 0x10543a4fc]
+Mono: AOT: FOUND method System.Environment:get_IsRunningOnWindows () [0x1050e4560 - 0x1050e4579 0x105431c51]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Environment:get_Platform ().
+Mono: AOT NOT FOUND: (wrapper managed-to-managed) string:.ctor (char,int).
+Mono: AOT: FOUND method string:CreateString (char,int) [0x1050c1e10 - 0x1050c1ed5 0x105430c5f]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) string:FastAllocateString (int).
+Mono: AOT: FOUND method string:IndexOfAny (char[]) [0x1050bcca0 - 0x1050bccc2 0x105430b06]
+Mono: AOT: FOUND method string:IndexOfAny (char[],int,int) [0x1050c0500 - 0x1050c05d9 0x105430c1a]
+Mono: AOT: FOUND method string:IndexOfAnyUnchecked (char[],int,int) [0x1050c05e0 - 0x1050c0809 0x105430c1c]
+Mono: AOT: FOUND method string:IndexOfUnchecked (char,int,int) [0x1050c0070 - 0x1050c0332 0x105430c16]
+Mono: AOT: FOUND method System.Security.SecurityManager:.cctor () [0x105285f90 - 0x105285fe7 0x10543da8c]
+Mono: AOT: FOUND method System.Security.Permissions.SecurityPermission:.ctor (System.Security.Permissions.SecurityPermissionFlag) [0x1052a78c0 - 0x1052a78d7 0x10543edd0]
+Mono: AOT: FOUND method System.Security.Permissions.SecurityPermission:set_Flags (System.Security.Permissions.SecurityPermissionFlag) [0x1052a7900 - 0x1052a7982 0x10543edd4]
+Mono: AOT: FOUND method System.Security.SecurityManager:CheckElevatedPermissions () [0x105286010 - 0x10528601e 0x10543daa3]
+Mono: AOT: FOUND method System.IO.MonoIO:ExistsFile (string,System.IO.MonoIOError&) [0x105220170 - 0x1052201ad 0x10543a314]
+Mono: AOT: FOUND method System.IO.MonoIO:GetFileAttributes (string,System.IO.MonoIOError&) [0x10521ffc0 - 0x10521fff7 0x10543a2fb]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:GetFileAttributes (char*,System.IO.MonoIOError&).
+Mono: AOT: FOUND method System.IO.File:Open (string,System.IO.FileMode) [0x105219dd0 - 0x105219e2c 0x105439fdc]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) object:__icall_wrapper_ves_icall_object_new_specific (intptr).
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.FileStream:.ctor (string,System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare).
+Mono: AOT: FOUND method System.IO.FileStream:.ctor (string,System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare) [0x10521beb0 - 0x10521befe 0x10543a0e2]
+Mono: AOT: FOUND method System.IO.FileStream:.cctor () [0x10521f000 - 0x10521f027 0x10543a23a]
+Mono: AOT: FOUND method System.IO.FileStream:.ctor (string,System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare,int,bool,System.IO.FileOptions) [0x10521c250 - 0x10521c7ca 0x10543a11b]
+Mono: AOT: FOUND method System.IO.Stream:.cctor () [0x1051ffc00 - 0x1051ffc32 0x1054394fe]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.Stream/NullStream:.ctor ().
+Mono: AOT: FOUND method System.IO.Stream/NullStream:.ctor () [0x1051fff40 - 0x1051fff52 0x10543951f]
+Mono: AOT: FOUND method System.IO.Stream:.ctor () [0x1051ffbe0 - 0x1051ffbf2 0x1054394f9]
+Mono: AOT: FOUND method System.MarshalByRefObject:.ctor () [0x1050ed640 - 0x1050ed649 0x1054324a7]
+Mono: AOT: FOUND method System.IO.Stream:.ctor () [0x1051ffbe0 - 0x1051ffbf2 0x1054394f9]
+Mono: AOT: FOUND method System.IO.Path:InsecureGetFullPath (string) [0x105221df0 - 0x105222418 0x10543a44f]
+Mono: AOT: FOUND method string:Trim () [0x1050bdd60 - 0x1050bdd77 0x105430b6a]
+Mono: AOT: FOUND method string:TrimHelper (int) [0x1050bdd80 - 0x1050bdea6 0x105430b6c]
+Mono: AOT: FOUND method string:CreateTrimmedString (int,int) [0x1050be030 - 0x1050be095 0x105430b70]
+Mono: AOT: FOUND method System.IO.Path:IsDirectorySeparator (char) [0x105222420 - 0x10522248e 0x10543a480]
+Mono: AOT: FOUND method System.IO.Path:IsPathRooted (string) [0x105222ce0 - 0x105222e83 0x10543a4da]
+Mono: AOT: FOUND method string:IndexOf (char,int) [0x1050bcc70 - 0x1050bcc9e 0x105430b04]
+Mono: AOT: FOUND method string:IndexOf (char,int,int) [0x1050bff30 - 0x1050c0069 0x105430c14]
+Mono: AOT: FOUND method System.IO.Directory:InsecureGetCurrentDirectory () [0x1051f6b30 - 0x1051f6b6e 0x1054390b4]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:GetCurrentDirectory (System.IO.MonoIOError&).
+Mono: AOT: FOUND method string:Concat (string,string,string) [0x1050bf3f0 - 0x1050bf4cd 0x105430bc3]
+Mono: AOT: FOUND method string:FillStringChecked (string,int,string) [0x1050bb110 - 0x1050bb1cc 0x105430ab0]
+Mono: AOT: FOUND method string:wstrcpy (char*,char*,int) [0x1050bb1d0 - 0x1050bb1f7 0x105430ab2]
+Mono: AOT: FOUND method System.Buffer:memcpy2 (byte*,byte*,int) [0x10506bd50 - 0x10506be43 0x10542dec3]
+Mono: AOT: FOUND method System.IO.Directory:Exists (string) [0x1051f68f0 - 0x1051f697f 0x1054390a0]
+Mono: AOT: FOUND method System.IO.Path:GetFullPath (string) [0x1052219f0 - 0x105221a02 0x10543a430]
+Mono: AOT: FOUND method System.EmptyArray`1<char>:.cctor () [0x1053c35c0 - 0x1053c35e4 0x1054479ba]
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) object:runtime_invoke_void (object,intptr,intptr,intptr).
+Mono: AOT: FOUND method System.IO.Path:CanonicalizePath (string) [0x105223670 - 0x105223ce6 0x10543a555]
+Mono: AOT: FOUND method System.IO.Path:GetPathRoot (string) [0x105222490 - 0x10522288f 0x10543a48d]
+Mono: AOT: FOUND method string:Split (char[]) [0x1050b9ea0 - 0x1050b9ebe 0x105430a6e]
+Mono: AOT: FOUND method string:SplitInternal (char[],int,System.StringSplitOptions) [0x1050b9f40 - 0x1050ba10e 0x105430a76]
+Mono: AOT: FOUND method string:MakeSeparatorList (char[],int[]&) [0x1050ba800 - 0x1050baa0c 0x105430a92]
+Mono: AOT: FOUND method string:InternalSplitKeepEmptyEntries (int[],int[],int,int) [0x1050ba370 - 0x1050ba534 0x105430a8a]
+Mono: AOT: FOUND method string:Substring (int,int) [0x1050bac50 - 0x1050badab 0x105430a98]
+Mono: AOT NOT FOUND: (wrapper stelemref) object:virt_stelemref_sealed_class (intptr,object).
+Mono: AOT: FOUND method string:InternalSubString (int,int) [0x1050badb0 - 0x1050bae2e 0x105430a9b]
+Mono: AOT: FOUND method string:Substring (int) [0x1050bac20 - 0x1050bac44 0x105430a96]
+Mono: AOT: FOUND method string:op_Equality (string,string) [0x1050b97e0 - 0x1050b97fb 0x105430a5a]
+Mono: AOT: FOUND method string:Equals (string,string) [0x1050b94f0 - 0x1050b954d 0x105430a50]
+Mono: AOT: FOUND method string:Join (string,string[],int,int) [0x1050b8810 - 0x1050b8afd 0x105430a36]
+Mono: AOT: FOUND method System.UnSafeCharBuffer:.ctor (char*,int) [0x1050db740 - 0x1050db770 0x1054317d0]
+Mono: AOT: FOUND method System.UnSafeCharBuffer:AppendString (string) [0x1050db770 - 0x1050db835 0x1054317d2]
+Mono: AOT: FOUND method string:op_Inequality (string,string) [0x1050b9800 - 0x1050b9825 0x105430a5c]
+Mono: AOT: FOUND method System.IO.MonoIO:ExistsDirectory (string,System.IO.MonoIOError&) [0x1052201b0 - 0x105220206 0x10543a319]
+Mono: AOT: FOUND method System.IO.Path:GetDirectoryName (string) [0x105221510 - 0x105221840 0x10543a3ed]
+Mono: AOT: FOUND method string:LastIndexOfAny (char[]) [0x1050bd220 - 0x1050bd246 0x105430b24]
+Mono: AOT: FOUND method string:LastIndexOfAny (char[],int,int) [0x1050c0c30 - 0x1050c0d77 0x105430c22]
+Mono: AOT: FOUND method string:LastIndexOfAnyUnchecked (char[],int,int) [0x1050c0d80 - 0x1050c0ee7 0x105430c24]
+Mono: AOT: FOUND method System.IO.Path:CleanPath (string) [0x105221050 - 0x10522150e 0x10543a3b1]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) object:__icall_wrapper_mono_gc_alloc_vector (intptr,intptr,intptr).
+Mono: AOT: FOUND method System.IO.MonoIO:Open (string,System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare,System.IO.FileOptions,System.IO.MonoIOError&) [0x1052202a0 - 0x1052202ff 0x10543a328]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:Open (char*,System.IO.FileMode,System.IO.FileAccess,System.IO.FileShare,System.IO.FileOptions,System.IO.MonoIOError&).
+Mono: mono_w32file_create: Opening /Users/akyte/Wasm2CIL/Tests/dsp/if.wasm with share 0x0 and access 0xc0000000
+Mono: share_allows_open: New file!
+Mono: mono_w32file_create: returning handle 0x4
+Mono: AOT: FOUND method Microsoft.Win32.SafeHandles.SafeFileHandle:.ctor (intptr,bool) [0x1050282e0 - 0x10502830e 0x10542ca4c]
+Mono: AOT: FOUND method Microsoft.Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid:.ctor (bool) [0x1050284b0 - 0x1050284da 0x10542ca62]
+Mono: AOT: FOUND method System.Runtime.InteropServices.SafeHandle:.ctor (intptr,bool) [0x1053707f0 - 0x105370837 0x1054454fd]
+Mono: AOT: FOUND method System.GC:.cctor () [0x105090120 - 0x10509013b 0x10542f84c]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.GC:get_ephemeron_tombstone ().
+Mono: AOT: FOUND method System.GC:SuppressFinalize (object) [0x10508fc90 - 0x10508fccd 0x10542f7ed]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.GC:_SuppressFinalize (object).
+Mono: AOT: FOUND method System.IO.MonoIO:GetFileType (System.Runtime.InteropServices.SafeHandle,System.IO.MonoIOError&) [0x105220050 - 0x1052200f0 0x10543a305]
+Mono: AOT: FOUND method System.Runtime.InteropServices.SafeHandle:DangerousAddRef (bool&) [0x105370a30 - 0x105370b1b 0x10544550f]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:GetFileType (intptr,System.IO.MonoIOError&).
+Mono: AOT: FOUND method System.Runtime.InteropServices.SafeHandle:DangerousRelease () [0x105370b20 - 0x105370b34 0x105445511]
+Mono: AOT: FOUND method System.Runtime.InteropServices.SafeHandle:DangerousReleaseInternal (bool) [0x105370bc0 - 0x105370d89 0x105445517]
+Mono: AOT: FOUND method System.IO.FileStream:InitBuffer (int,bool) [0x10521ed70 - 0x10521ef64 0x10543a21f]
+Mono: AOT: FOUND method System.IO.BinaryReader:.ctor (System.IO.Stream) [0x1051ea5d0 - 0x1051ea615 0x105438cfd]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:.ctor () [0x105129090 - 0x1051290a4 0x105433c87]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:.ctor (bool) [0x1051290b0 - 0x1051290ce 0x105433c89]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:.ctor (bool,bool) [0x1051290d0 - 0x10512911f 0x105433c8b]
+Mono: AOT: FOUND method System.Text.Encoding:.ctor (int) [0x1051141e0 - 0x10511423d 0x10543354a]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:SetDefaultFallbacks () [0x105129120 - 0x105129234 0x105433c8d]
+Mono: AOT: FOUND method System.Text.EncoderReplacementFallback:.ctor (string) [0x105113a70 - 0x105113bd7 0x105433524]
+Mono: AOT: FOUND method char:IsSurrogate (string,int) [0x10506e6f0 - 0x10506e790 0x10542e091]
+Mono: AOT: FOUND method char:IsSurrogate (char) [0x10506e6b0 - 0x10506e6e7 0x10542e08c]
+Mono: AOT: FOUND method System.Text.DecoderReplacementFallback:.ctor (string) [0x105110930 - 0x105110a97 0x1054333d5]
+Mono: AOT: FOUND method System.IO.BinaryReader:.ctor (System.IO.Stream,System.Text.Encoding,bool) [0x1051ea640 - 0x1051ea817 0x105438d03]
+Mono: AOT: FOUND method System.IO.FileStream:get_CanRead () [0x10521c9e0 - 0x10521ca13 0x10543a131]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:GetDecoder () [0x10512cd40 - 0x10512cd74 0x105433d17]
+Mono: AOT: FOUND method System.Text.UTF8Encoding/UTF8Decoder:.ctor (System.Text.UTF8Encoding) [0x10512d420 - 0x10512d437 0x105433d56]
+Mono: AOT: FOUND method System.Text.DecoderNLS:.ctor (System.Text.Encoding) [0x10510fd40 - 0x10510fdb4 0x105433389]
+Mono: AOT: FOUND method System.Text.UTF8Encoding/UTF8Decoder:Reset () [0x10512d710 - 0x10512d741 0x105433d7c]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:GetMaxCharCount (int) [0x10512cea0 - 0x10512cf72 0x105433d21]
+Mono: AOT: FOUND method System.Text.DecoderReplacementFallback:get_MaxCharCount () [0x105110b00 - 0x105110b18 0x1054333df]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:GetMaxByteCount (int) [0x10512cdc0 - 0x10512ce9d 0x105433d1f]
+Mono: AOT: FOUND method System.Text.EncoderReplacementFallback:get_MaxCharCount () [0x105113c40 - 0x105113c58 0x10543352e]
+Mono: AOT: FOUND method System.IO.BinaryReader:ReadInt32 () [0x1051eac60 - 0x1051eadd2 0x105438d22]
+Mono: AOT: FOUND method System.IO.BinaryReader:FillBuffer (int) [0x1051ec020 - 0x1051ec19c 0x105438d5a]
+Mono: AOT: FOUND method System.IO.FileStream:Read (byte[],int,int) [0x10521d070 - 0x10521d27b 0x10543a172]
+Mono: AOT: FOUND method System.IO.FileStream:ReadInternal (byte[],int,int) [0x10521d280 - 0x10521d34d 0x10543a177]
+Mono: AOT: FOUND method System.IO.FileStream:ReadSegment (byte[],int,int) [0x10521e9f0 - 0x10521ea61 0x10543a201]
+Mono: AOT: FOUND method System.IO.FileStream:RefillBuffer () [0x10521ec80 - 0x10521ecb3 0x10543a215]
+Mono: AOT: FOUND method System.IO.FileStream:FlushBuffer () [0x10521eb10 - 0x10521ec45 0x10543a20b]
+Mono: AOT: FOUND method System.IO.FileStream:ReadData (System.Runtime.InteropServices.SafeHandle,byte[],int,int) [0x10521ecc0 - 0x10521ed69 0x10543a21a]
+Mono: AOT: FOUND method System.IO.MonoIO:Read (System.Runtime.InteropServices.SafeHandle,byte[],int,int,System.IO.MonoIOError&) [0x105220300 - 0x1052203b8 0x10543a32d]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:Read (intptr,byte[],int,int,System.IO.MonoIOError&).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Buffer:InternalBlockCopy (System.Array,int,System.Array,int,int).
+Mono: AOT: FOUND method System.IO.BinaryReader:get_BaseStream () [0x1051ea820 - 0x1051ea834 0x105438d0a]
+Mono: AOT: FOUND method System.IO.FileStream:get_Position () [0x10521cbb0 - 0x10521ccb2 0x10543a14f]
+Mono: AOT: FOUND method System.IO.FileStream:get_CanSeek () [0x10521ca60 - 0x10521ca74 0x10543a13b]
+Mono: AOT: FOUND method System.IO.FileStream:get_Length () [0x10521cac0 - 0x10521cba7 0x10543a14a]
+Mono: AOT: FOUND method System.IO.FileStream:FlushBufferIfDirty () [0x10521ec50 - 0x10521ec71 0x10543a210]
+Mono: AOT: FOUND method System.IO.MonoIO:GetLength (System.Runtime.InteropServices.SafeHandle,System.IO.MonoIOError&) [0x1052205e0 - 0x105220680 0x10543a341]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:GetLength (intptr,System.IO.MonoIOError&).
+Mono: file_getfilesize: Returning size 706/0
+Mono: AOT: FOUND method System.Convert:ToUInt32 (int) [0x105073f80 - 0x105073fb6 0x10542e5ab]
+Mono: AOT: FOUND method System.DBNull:.cctor () [0x105080450 - 0x105080477 0x10542ef77]
+Mono: AOT: FOUND method System.Convert:.cctor () [0x105078550 - 0x105078b98 0x10542e9e0]
+Mono: AOT NOT FOUND: (wrapper stelemref) object:virt_stelemref_class_small_idepth (intptr,object).
+Mono: AOT: FOUND method System.IO.BinaryReader:ReadByte () [0x1051eaa50 - 0x1051eaad1 0x105438d18]
+Mono: AOT: FOUND method System.IO.FileStream:ReadByte () [0x10521cdd0 - 0x10521cf19 0x10543a168]
+Mono: AOT: FOUND method intptr:op_Explicit (intptr) [0x1050ed4a0 - 0x1050ed4b5 0x10543248a]
+Mono: AOT: FOUND method intptr:ToInt64 () [0x1050ed320 - 0x1050ed333 0x105432476]
+Mono: AOT: FOUND method System.EmptyArray`1<byte>:.cctor () [0x1053c2dd0 - 0x1053c2df4 0x105447990]
+Mono: AOT: FOUND method System.IO.BinaryReader:ReadBytes (int) [0x1051ebee0 - 0x1051ec018 0x105438d54]
+Mono: AOT: FOUND method System.Console:WriteLine (string,object,object) [0x1050e88e0 - 0x1050e8931 0x105431f69]
+Mono: AOT: FOUND method System.Console:.cctor () [0x1050e7630 - 0x1050e7769 0x105431d8c]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Text.EncodingHelper:InternalCodePage (int&).
+Mono: AOT: FOUND method System.Text.EncodingHelper:.cctor () [0x10512fb90 - 0x10512fbb7 0x105433ec9]
+Mono: AOT: FOUND method System.Text.EncodingHelper:get_UTF8Unmarked () [0x10512f140 - 0x10512f24e 0x105433e65]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Threading.Monitor:Exit (object).
+Mono: AOT: FOUND method System.Console:SetupStreams (System.Text.Encoding,System.Text.Encoding) [0x1050e7770 - 0x1050e7a64 0x105431da5]
+Mono: AOT: FOUND method System.ConsoleDriver:.cctor () [0x1050e99e0 - 0x1050e9a96 0x105432154]
+Mono: AOT: FOUND method System.ConsoleDriver:get_IsConsole () [0x1050ea9b0 - 0x1050eaa6d 0x105432384]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_ConsoleOutput ().
+Mono: _wapi_stdhandle_create: creating standard handle type <stdout>, fd 1
+Mono: _wapi_stdhandle_create: returning handle 0x1
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.ConsoleDriver:Isatty (intptr).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_ConsoleInput ().
+Mono: _wapi_stdhandle_create: creating standard handle type <stdin>, fd 0
+Mono: _wapi_stdhandle_create: returning handle 0x0
+Mono: AOT: FOUND method System.ConsoleDriver:CreateTermInfoDriver (string) [0x1050e9af0 - 0x1050e9b24 0x105432175]
+Mono: AOT: FOUND method System.TermInfoDriver:.cctor () [0x1050ffe00 - 0x1050ffef0 0x105432d97]
+Mono: AOT: FOUND method System.TermInfoDriver:.ctor (string) [0x1050f9120 - 0x1050f959e 0x105432ac8]
+Mono: AOT: FOUND method System.TermInfoDriver:SearchTerminfo (string) [0x1050f8fa0 - 0x1050f90aa 0x105432ab2]
+Mono: AOT: FOUND method System.TermInfoDriver:TryTermInfoDir (string,string) [0x1050f8eb0 - 0x1050f8f94 0x105432aaa]
+Mono: AOT: FOUND method string:Format (string,object,object,object) [0x1050be690 - 0x1050be725 0x105430b83]
+Mono: AOT: FOUND method System.ParamsArray:.cctor () [0x1050aad90 - 0x1050aadf3 0x10543033f]
+Mono: AOT: FOUND method System.ParamsArray:.ctor (object,object,object) [0x1050aaae0 - 0x1050aab9b 0x105430324]
+Mono: AOT: FOUND method string:FormatHelper (System.IFormatProvider,string,System.ParamsArray) [0x1050beaa0 - 0x1050beb55 0x105430b97]
+Mono: AOT: FOUND method System.Text.StringBuilderCache:Acquire (int) [0x10511fc60 - 0x10511fd5c 0x10543399f]
+Mono: AOT: FOUND method System.Text.StringBuilder:.ctor (int) [0x10511ad20 - 0x10511ad4a 0x105433893]
+Mono: AOT: FOUND method System.Text.StringBuilder:.ctor (string,int) [0x10511ad70 - 0x10511ade0 0x105433898]
+Mono: AOT: FOUND method System.Text.StringBuilder:.ctor (string,int,int,int) [0x10511ade0 - 0x10511b052 0x10543389a]
+Mono: AOT: FOUND method System.Text.StringBuilder:ThreadSafeCopy (char*,char[],int,int) [0x10511f230 - 0x10511f2f2 0x105433987]
+Mono: AOT: FOUND method System.Text.StringBuilder:AppendFormatHelper (System.IFormatProvider,string,System.ParamsArray) [0x10511dc40 - 0x10511e534 0x105433958]
+Mono: AOT: FOUND method System.ParamsArray:get_Item (int) [0x1050aacf0 - 0x1050aad20 0x105430335]
+Mono: AOT: FOUND method string:ToString () [0x1050bdd20 - 0x1050bdd30 0x105430b62]
+Mono: AOT: FOUND method System.Text.StringBuilder:Append (string) [0x10511c1c0 - 0x10511c328 0x1054338e2]
+Mono: AOT: FOUND method System.Text.StringBuilder:Append (char) [0x10511cbb0 - 0x10511cc33 0x105433900]
+Mono: AOT: FOUND method System.ParamsArray:GetAtSlow (int) [0x1050aad20 - 0x1050aad84 0x10543033a]
+Mono: AOT: FOUND method System.Text.StringBuilder:.ctor () [0x10511ad00 - 0x10511ad17 0x105433891]
+Mono: AOT: FOUND method System.Text.StringBuilder:ToString () [0x10511b770 - 0x10511b8ec 0x1054338cc]
+Mono: AOT: FOUND method int:ToString (string,System.IFormatProvider) [0x1050a3fd0 - 0x1050a400e 0x10542ffb0]
+Mono: AOT: FOUND method System.Globalization.NumberFormatInfo:GetInstance (System.IFormatProvider) [0x1051bb540 - 0x1051bb660 0x105437b7e]
+Mono: AOT: FOUND method System.Globalization.NumberFormatInfo:get_CurrentInfo () [0x1051bbf40 - 0x1051bbfcf 0x105437bc4]
+Mono: AOT: FOUND method System.Threading.Thread:get_CurrentThread () [0x105243fc0 - 0x10524401b 0x10543b8f0]
+Mono: AOT: FOUND method System.Threading.Thread:get_CurrentCulture () [0x105243050 - 0x105243062 0x10543b86d]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:.cctor () [0x1051e7370 - 0x1051e73ce 0x105438bd7]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:.ctor (int,bool,bool) [0x1051e3c40 - 0x1051e3f51 0x1054389db]
+Mono: AOT: FOUND method System.Globalization.CalendarData:.cctor () [0x10519eb50 - 0x10519f888 0x105436b98]
+Mono: AOT: FOUND method System.Globalization.CalendarData:.ctor () [0x10519eb30 - 0x10519eb4a 0x105436b93]
+Mono: AOT: FOUND method System.Globalization.CultureData:get_Invariant () [0x1051cdc40 - 0x1051cdff5 0x105438251]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:ConstructInvariant (bool) [0x1051e39c0 - 0x1051e3b8a 0x1054389ba]
+Mono: AOT: FOUND method System.Globalization.NumberFormatInfo:get_InvariantInfo () [0x1051bb4d0 - 0x1051bb533 0x105437b74]
+Mono: AOT: FOUND method System.Globalization.NumberFormatInfo:.ctor () [0x1051baab0 - 0x1051baac4 0x105437b2c]
+Mono: AOT: FOUND method System.Globalization.NumberFormatInfo:.ctor (System.Globalization.CultureData) [0x1051baf20 - 0x1051bb48a 0x105437b3c]
+Mono: AOT: FOUND method System.Globalization.NumberFormatInfo:ReadOnly (System.Globalization.NumberFormatInfo) [0x1051bce30 - 0x1051bced0 0x105437c2b]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) object:MemberwiseClone ().
+Mono: AOT NOT FOUND: (wrapper managed-to-native) object:MemberwiseClone (object).
+Mono: AOT: FOUND method System.Globalization.TextInfo:get_Invariant () [0x1051befd0 - 0x1051bf030 0x105437da6]
+Mono: AOT: FOUND method System.Globalization.TextInfo:.ctor (System.Globalization.CultureData) [0x1051bf030 - 0x1051bf0c5 0x105437db0]
+Mono: AOT: FOUND method System.Threading.Thread:GetCurrentCultureNoAppX () [0x1052432e0 - 0x1052433a4 0x10543b892]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:get_UserDefaultCulture () [0x1051e7100 - 0x1051e710e 0x105438bb8]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:ConstructCurrentCulture () [0x1051e17a0 - 0x1051e1877 0x105438833]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Globalization.CultureInfo:get_current_locale_name ().
+Mono: AOT: FOUND method System.Globalization.CultureInfo:CreateSpecificCulture (string) [0x1051e47b0 - 0x1051e4a6f 0x105438a3f]
+Mono: AOT: FOUND method string:ToLowerInvariant () [0x1050bdc20 - 0x1050bdc56 0x105430b56]
+Mono: AOT: FOUND method string:ToLower (System.Globalization.CultureInfo) [0x1050bdbc0 - 0x1050bdc1e 0x105430b54]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:get_TextInfo () [0x1051e2aa0 - 0x1051e2b9d 0x10543890c]
+Mono: AOT: FOUND method System.Globalization.TextInfo:ToLower (string) [0x1051bf880 - 0x1051bf8c7 0x105437de8]
+Mono: AOT: FOUND method System.Globalization.TextInfo:ToLowerInternal (string) [0x1051c0540 - 0x1051c0604 0x105437e22]
+Mono: AOT: FOUND method System.Globalization.TextInfo:ToLower (char) [0x1051bf800 - 0x1051bf879 0x105437de6]
+Mono: AOT: FOUND method System.Globalization.TextInfo:get_IsAsciiCasingSameAsInvariant () [0x1051bfa40 - 0x1051bfb3c 0x105437df4]
+Mono: AOT: FOUND method string:EqualsHelper (string,string) [0x1050b8ce0 - 0x1050b8e71 0x105430a3f]
+Mono: AOT: FOUND method System.Nullable`1<bool>:get_Value () [0x1053c2220 - 0x1053c225e 0x105447938]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Globalization.CultureInfo:construct_internal_locale_from_name (System.Globalization.CultureInfo,string).
+Mono: AOT: FOUND method System.Globalization.CultureInfo:get_IsNeutralCulture () [0x1051e3570 - 0x1051e35b7 0x105438976]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:get_CalendarType () [0x1051e6dd0 - 0x1051e6e53 0x105438b6b]
+Mono: AOT: FOUND method System.Globalization.CultureData:GetCultureData (string,bool,int,int,int,string,int,int,int,int,bool,string) [0x1051ce090 - 0x1051ce1ca 0x10543827e]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Globalization.CultureData:fill_culture_data (System.Globalization.CultureData,int).
+Mono: AOT: FOUND method System.Globalization.CultureInfo:GetFormat (System.Type) [0x1051e3910 - 0x1051e398c 0x1054389ac]
+Mono: AOT: FOUND method System.Globalization.CultureInfo:get_NumberFormat () [0x1051e35d0 - 0x1051e3660 0x105438980]
+Mono: AOT: FOUND method System.Globalization.CultureData:GetNFIValues (System.Globalization.NumberFormatInfo) [0x1051cedc0 - 0x1051cee9e 0x1054382f6]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Globalization.CultureData:fill_number_data (System.Globalization.NumberFormatInfo,int).
+Mono: AOT: FOUND method System.Number:FormatInt32 (int,string,System.Globalization.NumberFormatInfo) [0x1050a7850 - 0x1050a7878 0x10543024e]
+Mono: AOT: FOUND method System.NumberFormatter:.cctor () [0x1050f18d0 - 0x1050f1908 0x105432794]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.NumberFormatter:GetFormatterTables (ulong*&,int*&,char*&,char*&,long*&,int*&).
+Mono: AOT: FOUND method System.NumberFormatter:NumberToString (string,int,System.IFormatProvider) [0x1050f3610 - 0x1050f368e 0x1054328b5]
+Mono: AOT: FOUND method System.NumberFormatter:GetInstance (System.IFormatProvider) [0x1050f32d0 - 0x1050f3500 0x105432887]
+Mono: AOT: FOUND method System.NumberFormatter:.ctor (System.Threading.Thread) [0x1050f2080 - 0x1050f20e9 0x1054327ef]
+Mono: AOT: FOUND method System.NumberFormatter:Init (string,int,int) [0x1050f22a0 - 0x1050f2340 0x105432800]
+Mono: AOT: FOUND method System.NumberFormatter:Init (string) [0x1050f20f0 - 0x1050f2212 0x1054327f6]
+Mono: AOT: FOUND method System.NumberFormatter:InitHex (ulong) [0x1050f2220 - 0x1050f229b 0x1054327fb]
+Mono: AOT: FOUND method System.NumberFormatter:DecHexLen () [0x1050f1e80 - 0x1050f1ef1 0x1054327db]
+Mono: AOT: FOUND method System.NumberFormatter:DecHexLen (uint) [0x1050f1e50 - 0x1050f1e7e 0x1054327d6]
+Mono: AOT: FOUND method System.NumberFormatter:FastDecHexLen (int) [0x1050f1e10 - 0x1050f1e4f 0x1054327d1]
+Mono: AOT: FOUND method System.NumberFormatter:IntegerToString (string,System.IFormatProvider) [0x1050f3a40 - 0x1050f3c02 0x1054328d3]
+Mono: AOT: FOUND method System.NumberFormatter:GetNumberFormatInstance (System.IFormatProvider) [0x1050f2c40 - 0x1050f2c7c 0x10543283c]
+Mono: AOT: FOUND method System.NumberFormatter:FormatHexadecimal (int) [0x1050f4310 - 0x1050f4405 0x1054328f1]
+Mono: AOT: FOUND method System.NumberFormatter:ResetCharBuf (int) [0x1050f2990 - 0x1050f29f3 0x105432822]
+Mono: AOT NOT FOUND: (wrapper managed-to-managed) string:.ctor (char[],int,int).
+Mono: AOT: FOUND method string:CreateString (char[],int,int) [0x1050c1dc0 - 0x1050c1de1 0x105430c5b]
+Mono: AOT: FOUND method string:CtorCharArrayStartLength (char[],int,int) [0x1050bb2c0 - 0x1050bb47a 0x105430ab7]
+Mono: AOT: FOUND method System.NumberFormatter:Release () [0x1050f3500 - 0x1050f358b 0x1054328a5]
+Mono: AOT: FOUND method System.Text.StringBuilder:AppendHelper (string) [0x10511c330 - 0x10511c375 0x1054338e4]
+Mono: AOT: FOUND method System.Text.StringBuilder:Append (char*,int) [0x10511ec10 - 0x10511ed31 0x10543397d]
+Mono: AOT: FOUND method System.Text.StringBuilderCache:GetStringAndRelease (System.Text.StringBuilder) [0x10511fdd0 - 0x10511fdf9 0x1054339ad]
+Mono: AOT: FOUND method System.Text.StringBuilderCache:Release (System.Text.StringBuilder) [0x10511fd60 - 0x10511fdc9 0x1054339a8]
+Mono: AOT: FOUND method System.TermInfoReader:.ctor (string,string) [0x1051022c0 - 0x105102443 0x105432e23]
+Mono: AOT: FOUND method System.IO.File:OpenRead (string) [0x105219ed0 - 0x105219f12 0x105439fe8]
+Mono: mono_w32file_create: Opening /usr/share/terminfo/78/xterm-256color with share 0x1 and access 0x80000000
+Mono: share_allows_open: New file!
+Mono: mono_w32file_create: returning handle 0x5
+Mono: file_getfilesize: Returning size 3322/0
+Mono: file_getfilesize: Returning size 3322/0
+Mono: AOT: FOUND method System.TermInfoReader:ReadHeader (byte[],int&) [0x1051025a0 - 0x105102674 0x105432e2c]
+Mono: AOT: FOUND method System.TermInfoReader:GetInt16 (byte[],int) [0x105102990 - 0x105102a2e 0x105432e38]
+Mono: AOT: FOUND method System.TermInfoReader:DetermineVersion (int16) [0x105102500 - 0x105102594 0x105432e2a]
+Mono: AOT: FOUND method System.TermInfoReader:ReadNames (byte[],int&) [0x105102680 - 0x1051026c0 0x105432e2e]
+Mono: AOT: FOUND method System.TermInfoReader:GetString (byte[],int) [0x105102ba0 - 0x105102c25 0x105432e3e]
+Mono: AOT: FOUND method System.Text.Encoding:get_ASCII () [0x105115780 - 0x1051157d1 0x1054335fe]
+Mono: AOT: FOUND method System.Text.ASCIIEncoding:.ctor () [0x10510b900 - 0x10510b917 0x1054331f7]
+Mono: AOT: FOUND method System.Text.ASCIIEncoding:SetDefaultFallbacks () [0x10510b920 - 0x10510b97c 0x1054331f9]
+Mono: AOT: FOUND method System.Text.EncoderFallback:get_ReplacementFallback () [0x105112880 - 0x105112974 0x1054334a6]
+Mono: AOT: FOUND method System.Text.EncoderFallback:get_InternalSyncObject () [0x105112800 - 0x105112874 0x10543349a]
+Mono: AOT: FOUND method System.Text.EncoderReplacementFallback:.ctor () [0x105113a50 - 0x105113a6d 0x105433521]
+Mono: AOT: FOUND method System.Text.DecoderFallback:get_ReplacementFallback () [0x10510f510 - 0x10510f604 0x10543334b]
+Mono: AOT: FOUND method System.Text.DecoderFallback:get_InternalSyncObject () [0x10510f490 - 0x10510f504 0x10543333f]
+Mono: AOT: FOUND method System.Text.DecoderReplacementFallback:.ctor () [0x105110910 - 0x10511092d 0x1054333d2]
+Mono: AOT: FOUND method System.Text.ASCIIEncoding:GetString (byte[],int,int) [0x10510c730 - 0x10510c899 0x105433242]
+Mono: AOT: FOUND method string:CreateStringFromEncoding (byte*,int,System.Text.Encoding) [0x1050baf20 - 0x1050bafe1 0x105430aa3]
+Mono: AOT: FOUND method System.Text.ASCIIEncoding:GetCharCount (byte*,int,System.Text.DecoderNLS) [0x10510d240 - 0x10510d3f9 0x105433259]
+Mono: AOT: FOUND method System.Text.ASCIIEncoding:GetChars (byte*,int,char*,int,System.Text.DecoderNLS) [0x10510d400 - 0x10510d7f5 0x105433260]
+Mono: AOT: FOUND method System.IO.Stream:Dispose () [0x1051fe370 - 0x1051fe389 0x1054393bd]
+Mono: AOT: FOUND method System.IO.Stream:Close () [0x1051fe340 - 0x1051fe368 0x1054393b8]
+Mono: AOT: FOUND method System.IO.FileStream:Dispose (bool) [0x10521e550 - 0x10521e7cd 0x10543a1d9]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:Close (intptr,System.IO.MonoIOError&).
+Mono: file_data_close: closing fd 5
+Mono: AOT: FOUND method System.Console:OpenStandardOutput (int) [0x1050e7c30 - 0x1050e7c53 0x105431e0d]
+Mono: AOT: FOUND method System.Console:Open (intptr,System.IO.FileAccess,int) [0x1050e7b00 - 0x1050e7b93 0x105431deb]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.FileStream:.ctor (intptr,System.IO.FileAccess,bool,int,bool,bool).
+Mono: AOT: FOUND method System.IO.FileStream:.ctor (intptr,System.IO.FileAccess,bool,int,bool,bool) [0x10521bd00 - 0x10521bdec 0x10543a0cd]
+Mono: AOT: FOUND method System.IO.FileStream:Init (Microsoft.Win32.SafeHandles.SafeFileHandle,System.IO.FileAccess,bool,int,bool,bool) [0x10521c7d0 - 0x10521c9d3 0x10543a12c]
+Mono: AOT: FOUND method System.IO.FileStream:ExposeHandle () [0x10521cda0 - 0x10521cdc6 0x10543a163]
+Mono: AOT: FOUND method System.Console:get_OutputEncoding () [0x1050e8dc0 - 0x1050e8de9 0x105431fc0]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.CStreamWriter:.ctor (System.IO.Stream,System.Text.Encoding,bool).
+Mono: AOT: FOUND method System.IO.CStreamWriter:.ctor (System.IO.Stream,System.Text.Encoding,bool) [0x1052253b0 - 0x105225459 0x10543a66a]
+Mono: AOT: FOUND method System.IO.StreamWriter:.cctor () [0x1052093b0 - 0x10520942b 0x1054398c8]
+Mono: AOT: FOUND method System.Text.EncoderFallback:get_ExceptionFallback () [0x105112980 - 0x105112a63 0x1054334b2]
+Mono: AOT: FOUND method System.Text.DecoderFallback:get_ExceptionFallback () [0x10510f610 - 0x10510f6f3 0x105433357]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.StreamWriter:.ctor (System.IO.Stream,System.Text.Encoding,int,bool).
+Mono: AOT: FOUND method System.IO.StreamWriter:.ctor (System.IO.Stream,System.Text.Encoding,int,bool) [0x105207350 - 0x105207452 0x1054397f4]
+Mono: AOT: FOUND method System.IO.TextWriter/<>c:.cctor () [0x105210700 - 0x105210727 0x105439cdd]
+Mono: AOT: FOUND method System.IO.TextWriter:.cctor () [0x10520f760 - 0x10520fc25 0x105439c0a]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.TextWriter/NullTextWriter:.ctor ().
+Mono: AOT: FOUND method System.IO.TextWriter/NullTextWriter:.ctor () [0x10520fc30 - 0x10520fc66 0x105439c67]
+Mono: AOT: FOUND method System.IO.TextWriter:.ctor (System.IFormatProvider) [0x10520e0c0 - 0x10520e134 0x105439a90]
+Mono: AOT: FOUND method System.IO.TextWriter:get_InitialNewLine () [0x10520e050 - 0x10520e05e 0x105439a86]
+Mono: AOT: FOUND method System.Environment:get_NewLine () [0x1050e2b90 - 0x1050e2bd0 0x105431b67]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Environment:GetNewLine ().
+Mono: AOT: FOUND method string:ToCharArray () [0x1050b9a50 - 0x1050b9b15 0x105430a60]
+Mono: AOT: FOUND method System.IO.TextWriter:.ctor (System.IFormatProvider) [0x10520e0c0 - 0x10520e134 0x105439a90]
+Mono: AOT: FOUND method System.IO.Stream/NullStream:get_CanWrite () [0x1051fff70 - 0x1051fff7e 0x105439523]
+Mono: AOT: FOUND method System.IO.StreamWriter:Init (System.IO.Stream,System.Text.Encoding,int,bool) [0x105207680 - 0x1052077f3 0x105439816]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:GetEncoder () [0x10512cd80 - 0x10512cdb4 0x105433d1b]
+Mono: AOT: FOUND method System.Text.UTF8Encoding/UTF8Encoder:.ctor (System.Text.UTF8Encoding) [0x10512d100 - 0x10512d117 0x105433d30]
+Mono: AOT: FOUND method System.Text.EncoderNLS:.ctor (System.Text.Encoding) [0x105112ed0 - 0x105112f44 0x1054334da]
+Mono: AOT: FOUND method System.Text.UTF8Encoding/UTF8Encoder:Reset () [0x10512d3c0 - 0x10512d3f1 0x105433d52]
+Mono: AOT: FOUND method System.Text.EncoderExceptionFallback:get_MaxCharCount () [0x105111fe0 - 0x105111feb 0x105433462]
+Mono: AOT: FOUND method System.IO.Stream/NullStream:get_CanSeek () [0x1051fff80 - 0x1051fff8e 0x105439525]
+Mono: AOT: FOUND method System.IO.Stream/NullStream:get_Position () [0x1051fffa0 - 0x1051fffab 0x105439529]
+Mono: AOT: FOUND method System.IO.StreamWriter:.ctor (System.IO.Stream,System.Text.Encoding,int,bool) [0x105207350 - 0x105207452 0x1054397f4]
+Mono: AOT: FOUND method System.IO.FileStream:get_CanWrite () [0x10521ca20 - 0x10521ca53 0x10543a136]
+Mono: AOT: FOUND method System.IO.StreamWriter:set_AutoFlush (bool) [0x105207bc0 - 0x105207bf8 0x10543983f]
+Mono: AOT: FOUND method System.IO.StreamWriter:CheckAsyncTaskInProgress () [0x1052071e0 - 0x10520723c 0x1054397ce]
+Mono: AOT: FOUND method System.CompatibilitySwitches:.cctor () [0x1050e2780 - 0x1050e2789 0x105431b2e]
+Mono: AOT: FOUND method System.IO.StreamWriter:Flush (bool,bool) [0x105207a60 - 0x105207b93 0x105439833]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:GetPreamble () [0x10512cf80 - 0x10512cfdb 0x105433d23]
+Mono: AOT: FOUND method System.Text.EncoderNLS:GetBytes (char[],int,int,byte[],int,bool) [0x105113220 - 0x105113475 0x1054334e9]
+Mono: AOT: FOUND method System.Text.EncoderNLS:GetBytes (char*,int,byte*,int,bool) [0x105113480 - 0x10511358a 0x1054334f5]
+Mono: AOT: FOUND method System.BitConverter:.cctor () [0x10506aba0 - 0x10506abbb 0x10542ddfa]
+Mono: AOT: FOUND method System.BitConverter:AmILittleEndian () [0x105069c00 - 0x105069c38 0x10542dd63]
+Mono: AOT: FOUND method System.Text.UTF8Encoding:GetBytes (char*,int,byte*,int,System.Text.EncoderNLS) [0x10512a9f0 - 0x10512b54d 0x105433cf2]
+Mono: AOT: FOUND method System.IO.FileStream:Flush () [0x10521e1e0 - 0x10521e238 0x10543a1c0]
+Mono: AOT: FOUND method System.ConsoleDriver:get_IsConsole () [0x1050ea9b0 - 0x1050eaa6d 0x105432384]
+Mono: AOT: FOUND method System.Console:OpenStandardInput (int) [0x1050e7bf0 - 0x1050e7c13 0x105431e03]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.CStreamReader:.ctor (System.IO.Stream,System.Text.Encoding).
+Mono: AOT: FOUND method System.IO.CStreamReader:.ctor (System.IO.Stream,System.Text.Encoding) [0x105225030 - 0x1052250cc 0x10543a658]
+Mono: AOT: FOUND method System.IO.StreamReader:.cctor () [0x105204b70 - 0x105204ba2 0x10543978a]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.StreamReader/NullStreamReader:.ctor ().
+Mono: AOT: FOUND method System.IO.StreamReader/NullStreamReader:.ctor () [0x105204bb0 - 0x105204bd5 0x105439793]
+Mono: AOT: FOUND method System.IO.StreamReader:.ctor () [0x105202370 - 0x105202382 0x105439627]
+Mono: AOT: FOUND method System.IO.TextReader/<>c:.cctor () [0x10520ded0 - 0x10520def7 0x105439a67]
+Mono: AOT: FOUND method System.IO.TextReader:.cctor () [0x10520d1f0 - 0x10520d37c 0x105439a08]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.TextReader/NullTextReader:.ctor ().
+Mono: AOT: FOUND method System.IO.TextReader/NullTextReader:.ctor () [0x10520d380 - 0x10520d392 0x105439a29]
+Mono: AOT: FOUND method System.IO.TextReader:.ctor () [0x10520c600 - 0x10520c612 0x105439985]
+Mono: AOT: FOUND method System.IO.TextReader:.ctor () [0x10520c600 - 0x10520c612 0x105439985]
+Mono: AOT: FOUND method System.IO.StreamReader:Init (System.IO.Stream) [0x105202a10 - 0x105202a4f 0x105439679]
+Mono: AOT: FOUND method System.IO.StreamReader:.ctor (System.IO.Stream,System.Text.Encoding) [0x105202400 - 0x10520243a 0x105439636]
+Mono: AOT: FOUND method System.IO.StreamReader:get_DefaultBufferSize () [0x105202300 - 0x10520230e 0x10543961d]
+Mono: AOT: FOUND method System.IO.StreamReader:.ctor (System.IO.Stream,System.Text.Encoding,bool,int,bool) [0x1052024c0 - 0x1052025c9 0x105439645]
+Mono: AOT: FOUND method System.IO.StreamReader:Init (System.IO.Stream,System.Text.Encoding,bool,int,bool) [0x105202870 - 0x105202a0b 0x105439672]
+Mono: AOT: FOUND method System.IO.TextWriter:Synchronized (System.IO.TextWriter) [0x10520e280 - 0x10520e36f 0x105439ab8]
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.TextWriter/SyncTextWriter:.ctor (System.IO.TextWriter).
+Mono: AOT: FOUND method System.IO.TextWriter/SyncTextWriter:.ctor (System.IO.TextWriter) [0x10520fcd0 - 0x10520fd25 0x105439c77]
+Mono: AOT: FOUND method System.IO.TextWriter:get_FormatProvider () [0x10520e140 - 0x10520e173 0x105439a95]
+Mono: AOT: FOUND method System.Console:OpenStandardError (int) [0x1050e7bb0 - 0x1050e7bd3 0x105431df9]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:get_ConsoleError ().
+Mono: _wapi_stdhandle_create: creating standard handle type <stderr>, fd 2
+Mono: _wapi_stdhandle_create: returning handle 0x2
+Mono: AOT NOT FOUND: (wrapper synchronized) System.IO.TextWriter/SyncTextWriter:WriteLine (string,object,object).
+Mono: AOT: FOUND method System.IO.TextWriter/SyncTextWriter:WriteLine (string,object,object) [0x1052104f0 - 0x10521052e 0x105439cc9]
+Mono: AOT: FOUND method System.IO.TextWriter:WriteLine (string,object,object) [0x10520f020 - 0x10520f074 0x105439b77]
+Mono: AOT: FOUND method string:Format (System.IFormatProvider,string,object,object) [0x1050be890 - 0x1050be923 0x105430b8d]
+Mono: AOT: FOUND method System.ParamsArray:.ctor (object,object) [0x1050aaa40 - 0x1050aaad4 0x10543031d]
+Mono: AOT: FOUND method System.NumberFormatter:InitDecHexDigits (uint) [0x1050f1960 - 0x1050f19d5 0x1054327ae]
+Mono: AOT: FOUND method System.NumberFormatter:ToDecHex (int) [0x1050f1d90 - 0x1050f1e06 0x1054327cc]
+Mono: AOT: FOUND method System.NumberFormatter:FastToDecHex (int) [0x1050f1cb0 - 0x1050f1d82 0x1054327bd]
+Mono: AOT: FOUND method System.NumberFormatter:FormatDecimal (int,System.Globalization.NumberFormatInfo) [0x1050f4280 - 0x1050f430b 0x1054328ea]
+Mono: AOT: FOUND method System.NumberFormatter:AppendDigits (int,int) [0x1050f5b70 - 0x1050f5e7f 0x105432967]
+Mono: AOT: FOUND method System.IO.TextWriter:WriteLine (string) [0x10520ed30 - 0x10520eeab 0x105439b60]
+Mono: AOT: FOUND method string:CopyTo (int,char[],int,int) [0x1050b9830 - 0x1050b9a45 0x105430a5e]
+Mono: AOT: FOUND method System.IO.CStreamWriter:Write (char[],int,int) [0x105225460 - 0x10522577b 0x10543a672]
+Mono: AOT: FOUND method System.IO.StreamWriter:Write (char[],int,int) [0x105207df0 - 0x105207fa8 0x105439862]
+Mono: AOT: FOUND method System.IO.FileStream:Write (byte[],int,int) [0x10521d710 - 0x10521d8e6 0x10543a192]
+Mono: AOT: FOUND method System.IO.FileStream:WriteInternal (byte[],int,int) [0x10521d8f0 - 0x10521da75 0x10543a197]
+Mono: AOT: FOUND method System.IO.MonoIO:Write (System.Runtime.InteropServices.SafeHandle,byte[],int,int,System.IO.MonoIOError&) [0x1052203c0 - 0x105220478 0x10543a332]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.IO.MonoIO:Write (intptr,byte[],int,int,System.IO.MonoIOError&).
+Mono: AOT NOT FOUND: (wrapper remoting-invoke-with-check) System.IO.MemoryStream:.ctor (byte[]).
+Mono: AOT: FOUND method System.IO.MemoryStream:.ctor (byte[]) [0x1051fb870 - 0x1051fb88c 0x1054392fe]
+Mono: AOT: FOUND method System.IO.MemoryStream:.ctor (byte[],bool) [0x1051fb890 - 0x1051fb942 0x105439300]
+Mono: AOT: FOUND method System.IO.MemoryStream:get_CanRead () [0x1051fbb30 - 0x1051fbb44 0x105439308]
+Mono: AOT: FOUND method System.IO.MemoryStream:ReadByte () [0x1051fc900 - 0x1051fc998 0x105439335]
+Mono: AOT: FOUND method System.Convert:ToInt32 (long) [0x105073990 - 0x1050739df 0x10542e549]
+Mono: AOT: FOUND method System.Console:WriteLine (string,object) [0x1050e87a0 - 0x1050e87e7 0x105431f4a]
+Mono: AOT NOT FOUND: (wrapper synchronized) System.IO.TextWriter/SyncTextWriter:WriteLine (string,object).
+Mono: AOT: FOUND method System.IO.TextWriter/SyncTextWriter:WriteLine (string,object) [0x1052104b0 - 0x1052104e4 0x105439cc7]
+Mono: AOT: FOUND method System.IO.TextWriter:WriteLine (string,object) [0x10520efd0 - 0x10520f01a 0x105439b72]
+Mono: AOT: FOUND method string:Format (System.IFormatProvider,string,object) [0x1050be800 - 0x1050be88b 0x105430b8b]
+Mono: AOT: FOUND method System.ParamsArray:.ctor (object) [0x1050aa9c0 - 0x1050aaa32 0x105430316]
+Mono: AOT: FOUND method System.Text.StringBuilder:Clear () [0x10511bba0 - 0x10511bbb8 0x1054338d1]
+Mono: AOT: FOUND method System.Text.StringBuilder:set_Length (int) [0x10511bbe0 - 0x10511bd8a 0x1054338d5]
+Mono: AOT: FOUND method System.IO.BinaryReader:Dispose () [0x1051ea8e0 - 0x1051ea8ff 0x105438d10]
+Mono: AOT: FOUND method System.IO.BinaryReader:Dispose (bool) [0x1051ea860 - 0x1051ea8dc 0x105438d0e]
+Mono: AOT: FOUND method System.IO.MemoryStream:Dispose (bool) [0x1051fbbe0 - 0x1051fbc59 0x105439310]
+Mono: AOT: FOUND method System.IO.Stream:Dispose (bool) [0x1051fe390 - 0x1051fe399 0x1054393c2]
+Mono: file_getfilesize: Returning size 706/0
+Mono: file_getfilesize: Returning size 706/0
+Mono: AOT: FOUND method System.Convert:ToInt32 (ulong) [0x1050739e0 - 0x105073a1f 0x10542e54e]
+Mono: file_getfilesize: Returning size 706/0
+Mono: AOT: FOUND method System.IO.MemoryStream:Read (byte[],int,int) [0x1051fc4b0 - 0x1051fc6c7 0x105439331]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) object:__icall_wrapper_mono_gc_alloc_obj (intptr,intptr).
+Mono: AOT: FOUND method System.Collections.Generic.List`1:.ctor () [0x1053ba0a0 - 0x1053ba102 0x105447615]
+Mono: AOT: FOUND method System.Collections.Generic.List`1:.cctor () [0x1053bcbe0 - 0x1053bcc16 0x10544781b]
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) object:runtime_invoke_void (object,intptr,intptr,intptr).
+Mono: AOT: FOUND method System.Console:WriteLine (string) [0x1050e86e0 - 0x1050e871d 0x105431f2f]
+Mono: AOT NOT FOUND: (wrapper synchronized) System.IO.TextWriter/SyncTextWriter:WriteLine (string).
+Mono: AOT: FOUND method System.IO.TextWriter/SyncTextWriter:WriteLine (string) [0x105210450 - 0x10521047a 0x105439cc3]
+Mono: AOT: FOUND method System.IO.MemoryStream:get_Position () [0x1051fc380 - 0x1051fc3ce 0x10543932d]
+Mono: AOT: FOUND method System.IO.MemoryStream:get_Length () [0x1051fc330 - 0x1051fc37e 0x10543932b]
+Mono: AOT: FOUND method System.Collections.Generic.List`1:Add (T) [0x1053ba8a0 - 0x1053ba928 0x10544768c]
+Mono: AOT: FOUND method System.Collections.Generic.List`1:EnsureCapacity (int) [0x1053bb010 - 0x1053bb0a1 0x1054476f5]
+Mono: AOT: FOUND method System.Collections.Generic.List`1:set_Capacity (int) [0x1053ba490 - 0x1053ba5b6 0x105447634]
+Mono: AOT: FOUND method System.Collections.Generic.List`1:ToArray () [0x1053bca40 - 0x1053bca98 0x1054477ff]
+Mono: AOT: FOUND method System.Array:Copy (System.Array,int,System.Array,int,int) [0x10505d640 - 0x10505da5c 0x10542d785]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Array:FastCopy (System.Array,int,System.Array,int,int).
+Mono: AOT: FOUND method string:Format (string,object) [0x1050be570 - 0x1050be5f2 0x105430b7f]
+Mono: AOT: FOUND method System.Collections.Generic.List`1:RemoveAt (int) [0x1053bc5d0 - 0x1053bc681 0x1054477c7]
+Mono: AOT: FOUND method System.IO.BinaryReader:ReadSingle () [0x1051eb0c0 - 0x1051eb0f6 0x105438d2f]
+Mono: AOT: FOUND method Mono.Security.BitConverterLE:ToSingle (byte[],int) [0x104fe1de0 - 0x104fe1e21 0x10542abe1]
+Mono: AOT: FOUND method Mono.Security.BitConverterLE:UIntFromBytes (byte*,byte[],int) [0x104fe19c0 - 0x104fe1b37 0x10542abcb]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) object:__icall_wrapper_mono_helper_ldstr (intptr,intptr).
+Mono: AOT: FOUND method System.Exception:ToString () [0x10508e990 - 0x10508e9ac 0x10542f6c8]
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) <Module>:runtime_invoke_object__this__ (object,intptr,intptr,intptr).
+Mono: AOT: FOUND method System.Exception:ToString (bool,bool) [0x10508e9b0 - 0x10508eb8b 0x10542f6cd]
+Mono: AOT: FOUND method System.Exception:get_Message () [0x10508e1f0 - 0x10508e290 0x10542f642]
+Mono: AOT: FOUND method System.Exception:GetClassName () [0x10508e600 - 0x10508e654 0x10542f68d]
+Mono: AOT: FOUND method System.RuntimeType:.cctor () [0x1050b5d80 - 0x1050b5efb 0x1054308c4]
+Mono: AOT: FOUND method System.RuntimeType:ToString () [0x1050b5450 - 0x1050b5466 0x10543086b]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeType:getFullName (System.RuntimeType,bool,bool).
+Mono: AOT: FOUND method System.Exception:GetStackTrace (bool) [0x10508e760 - 0x10508e7de 0x10542f6a8]
+Mono: AOT: FOUND method System.Environment:GetStackTrace (System.Exception,bool) [0x1050e46e0 - 0x1050e476f 0x105431c6b]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:.ctor (System.Exception,bool) [0x10522c450 - 0x10522c473 0x10543aa5a]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:.ctor (System.Exception,int,bool) [0x10522c4a0 - 0x10522c58b 0x10543aa5e]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Diagnostics.StackTrace:get_trace (System.Exception,int,bool).
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:ToString (System.Diagnostics.StackTrace/TraceFormat) [0x10522d200 - 0x10522d216 0x10543aab9]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:ToString () [0x10522d0f0 - 0x10522d1fe 0x10543aab4]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:AddFrames (System.Text.StringBuilder) [0x10522c830 - 0x10522cc84 0x10543aa80]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:get_FrameCount () [0x10522c690 - 0x10522c6b9 0x10543aa68]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:GetFrame (int) [0x10522c6c0 - 0x10522c720 0x10543aa6a]
+Mono: AOT: FOUND method System.Diagnostics.StackFrame:GetMethod () [0x10522c000 - 0x10522c014 0x10543aa2d]
+Mono: AOT: FOUND method System.Reflection.MethodBase:op_Equality (System.Reflection.MethodBase,System.Reflection.MethodBase) [0x105144880 - 0x1051449e6 0x105434711]
+Mono: AOT: FOUND method System.Diagnostics.StackTrace:GetFullNameForStackTrace (System.Text.StringBuilder,System.Reflection.MethodBase,bool,bool&) [0x10522cc90 - 0x10522d0eb 0x10543aa9b]
+Mono: AOT: FOUND method System.Reflection.MonoCMethod:get_DeclaringType () [0x105154060 - 0x10515407a 0x10543505d]
+Mono: AOT: FOUND method System.Reflection.MonoMethodInfo:GetDeclaringType (intptr) [0x105152840 - 0x10515285d 0x105434fac]
+Mono: AOT: FOUND method System.Reflection.MonoMethodInfo:GetMethodInfo (intptr) [0x105152770 - 0x105152836 0x105434faa]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Reflection.MonoMethodInfo:get_method_info (intptr,System.Reflection.MonoMethodInfo&).
+Mono: AOT: FOUND method System.RuntimeType:get_IsGenericType () [0x1050b0130 - 0x1050b0146 0x105430629]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:HasInstantiation (System.RuntimeType).
+Mono: AOT: FOUND method System.Reflection.CustomAttributeExtensions:IsDefined (System.Reflection.MemberInfo,System.Type) [0x105141f60 - 0x105141f7b 0x1054345c8]
+Mono: AOT: FOUND method System.Attribute:IsDefined (System.Reflection.MemberInfo,System.Type) [0x105067d70 - 0x105067d90 0x10542dc75]
+Mono: AOT: FOUND method System.Attribute:IsDefined (System.Reflection.MemberInfo,System.Type,bool) [0x105067d90 - 0x105067f4f 0x10542dc77]
+Mono: AOT: FOUND method System.Reflection.MemberInfo:op_Equality (System.Reflection.MemberInfo,System.Reflection.MemberInfo) [0x1051431f0 - 0x1051434f6 0x105434685]
+Mono: AOT: FOUND method System.RuntimeType:IsSubclassOf (System.Type) [0x1050aed10 - 0x1050aee30 0x105430536]
+Mono: AOT: FOUND method System.RuntimeType:GetBaseType () [0x1050af0d0 - 0x1050af26f 0x105430559]
+Mono: AOT: FOUND method System.__Filters:.cctor () [0x105063290 - 0x1050632b7 0x10542da8e]
+Mono: AOT: FOUND method System.Reflection.Missing:.cctor () [0x105145ad0 - 0x105145af7 0x1054347e3]
+Mono: AOT: FOUND method System.EmptyArray`1:.cctor () [0x1050ed0d0 - 0x1050ed106 0x105432455]
+Mono: AOT: FOUND method System.Type:.cctor () [0x1050d7f00 - 0x1050d80de 0x1054315b2]
+Mono: AOT: FOUND method System.Type:get_IsInterface () [0x1050d5d00 - 0x1050d5d91 0x1054313be]
+Mono: AOT: FOUND method System.RuntimeTypeHandle:IsInterface (System.RuntimeType) [0x1050f8e50 - 0x1050f8e76 0x105432aa6]
+Mono: AOT: FOUND method System.Type:get_Attributes () [0x1050d5900 - 0x1050d5919 0x105431373]
+Mono: AOT: FOUND method System.RuntimeType:GetAttributeFlagsImpl () [0x1050af280 - 0x1050af292 0x10543056b]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:GetAttributes (System.RuntimeType).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:IsGenericVariable (System.RuntimeType).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:GetBaseType (System.RuntimeType).
+Mono: AOT: FOUND method System.Reflection.ConstructorInfo:.cctor () [0x10514cca0 - 0x10514cccb 0x105434bcd]
+Mono: AOT: FOUND method System.Reflection.ConstructorInfo:get_MemberType () [0x10514c990 - 0x10514c99e 0x105434b80]
+Mono: AOT: FOUND method System.Reflection.MonoCMethod:IsDefined (System.Type,bool) [0x1051540b0 - 0x1051540d5 0x105435061]
+Mono: AOT: FOUND method System.MonoCustomAttrs:.cctor () [0x1050f01e0 - 0x1050f0219 0x10543263a]
+Mono: AOT: FOUND method System.AttributeUsageAttribute:.cctor () [0x105069530 - 0x105069569 0x10542dd26]
+Mono: AOT: FOUND method System.AttributeUsageAttribute:.ctor (System.AttributeTargets) [0x105069410 - 0x105069438 0x10542dd03]
+Mono: AOT: FOUND method System.AttributeUsageAttribute:.ctor (System.AttributeTargets) [0x105069410 - 0x105069438 0x10542dd03]
+Mono: AOT: FOUND method System.MonoCustomAttrs:IsDefined (System.Reflection.ICustomAttributeProvider,System.Type,bool) [0x1050ef780 - 0x1050ef907 0x1054325f1]
+Mono: AOT: FOUND method System.MonoCustomAttrs:IsUserCattrProvider (object) [0x1050ee660 - 0x1050ee7ac 0x105432576]
+Mono: AOT: FOUND method System.Reflection.Assembly:op_Equality (System.Reflection.Assembly,System.Reflection.Assembly) [0x10514a6c0 - 0x10514a725 0x105434a70]
+Mono: AOT: FOUND method System.RuntimeType:get_Assembly () [0x1050aec10 - 0x1050aec22 0x10543051d]
+Mono: AOT: FOUND method System.RuntimeType:GetRuntimeAssembly () [0x1050aec30 - 0x1050aec42 0x105430522]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:GetAssembly (System.RuntimeType).
+Mono: AOT: FOUND method System.Reflection.Assembly:op_Inequality (System.Reflection.Assembly,System.Reflection.Assembly) [0x10514a730 - 0x10514a79f 0x105434a72]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.MonoCustomAttrs:IsDefinedInternal (System.Reflection.ICustomAttributeProvider,System.Type).
+Mono: AOT: FOUND method System.MonoCustomAttrs:GetPseudoCustomAttributes (System.Reflection.ICustomAttributeProvider,System.Type) [0x1050ee7b0 - 0x1050eea7c 0x10543258b]
+Mono: AOT: FOUND method System.MonoCustomAttrs:RetrieveAttributeUsage (System.Type) [0x1050f0060 - 0x1050f01d4 0x105432627]
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:.ctor () [0x1053af910 - 0x1053af926 0x105447369]
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:.ctor (int,System.Collections.Generic.IEqualityComparer`1<TKey>) [0x1053af970 - 0x1053afa07 0x10544736f]
+Mono: AOT: FOUND method System.Collections.Generic.EqualityComparer`1:get_Default () [0x1053b8210 - 0x1053b826e 0x10544754d]
+Mono: AOT: FOUND method System.Collections.Generic.EqualityComparer`1:CreateComparer () [0x1053b8270 - 0x1053b869b 0x10544754f]
+Mono: AOT: FOUND method System.RuntimeType:IsAssignableFrom (System.Type) [0x1050aee80 - 0x1050af034 0x105430544]
+Mono: AOT: FOUND method System.RuntimeType:get_UnderlyingSystemType () [0x1050af270 - 0x1050af280 0x105430566]
+Mono: AOT: FOUND method System.RuntimeTypeHandle:CanCastTo (System.RuntimeType,System.RuntimeType) [0x1050f8e80 - 0x1050f8ea2 0x105432aa8]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:type_is_assignable_from (System.Type,System.Type).
+Mono: AOT: FOUND method System.RuntimeType:get_IsEnum () [0x1050af440 - 0x1050af467 0x1054305aa]
+Mono: AOT: FOUND method System.Collections.Generic.ObjectEqualityComparer`1:.ctor () [0x1053b9620 - 0x1053b962d 0x10544759e]
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:TryGetValue (TKey,TValue&) [0x1053b2170 - 0x1053b2205 0x1054473cf]
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:FindEntry (TKey) [0x1053b0ee0 - 0x1053b10a7 0x1054473b3]
+Mono: AOT: FOUND method System.MonoCustomAttrs:RetrieveAttributeUsageNoCache (System.Type) [0x1050efef0 - 0x1050f005d 0x105432618]
+Mono: AOT: FOUND method System.MonoCustomAttrs:GetCustomAttributes (System.Reflection.ICustomAttributeProvider,System.Type,bool) [0x1050eec60 - 0x1050ef635 0x1054325b8]
+Mono: AOT: FOUND method System.MonoCustomAttrs:GetCustomAttributesBase (System.Reflection.ICustomAttributeProvider,System.Type,bool) [0x1050eeb80 - 0x1050eec5b 0x1054325af]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.MonoCustomAttrs:GetCustomAttributesInternal (System.Reflection.ICustomAttributeProvider,System.Type,bool).
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) <Module>:runtime_invoke_void__this___int (object,intptr,intptr,intptr).
+Mono: AOT: FOUND method System.AttributeUsageAttribute:set_Inherited (bool) [0x105069510 - 0x10506952f 0x10542dd21]
+Mono: AOT NOT FOUND: (wrapper runtime-invoke) <Module>:runtime_invoke_void__this___byte (object,intptr,intptr,intptr).
+Mono: AOT: FOUND method System.MonoCustomAttrs:GetPseudoCustomAttributes (System.Type) [0x1050eea80 - 0x1050eeb7b 0x1054325a4]
+Mono: AOT: FOUND method System.Array:CreateInstance (System.Type,int) [0x10505ce20 - 0x10505ce70 0x10542d769]
+Mono: AOT: FOUND method System.Array:CreateInstance (System.Type,int[]) [0x10505cf70 - 0x10505d125 0x10542d775]
+Mono: AOT: FOUND method System.Type:Equals (System.Type) [0x1050d78e0 - 0x1050d793a 0x10543153c]
+Mono: AOT: FOUND method System.RuntimeType:get_ContainsGenericParameters () [0x1050b4340 - 0x1050b4435 0x1054307ed]
+Mono: AOT: FOUND method System.RuntimeType:get_IsGenericParameter () [0x1050b0070 - 0x1050b0086 0x10543061a]
+Mono: AOT: FOUND method System.Type:get_HasElementType () [0x1050d62a0 - 0x1050d62bd 0x105431446]
+Mono: AOT: FOUND method System.RuntimeType:HasElementTypeImpl () [0x1050af470 - 0x1050af486 0x1054305b1]
+Mono: AOT: FOUND method System.RuntimeTypeHandle:HasElementType (System.RuntimeType) [0x1050f8d20 - 0x1050f8d63 0x105432a98]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:IsArray (System.RuntimeType).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:IsByRef (System.RuntimeType).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:IsPointer (System.RuntimeType).
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Array:CreateInstanceImpl (System.Type,int[],int[]).
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:set_Item (TKey,TValue) [0x1053b0340 - 0x1053b0361 0x105447393]
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:TryInsert (TKey,TValue,System.Collections.Generic.InsertionBehavior) [0x1053b11b0 - 0x1053b1638 0x1054473b9]
+Mono: AOT: FOUND method System.Collections.Generic.Dictionary`2:Initialize (int) [0x1053b10b0 - 0x1053b11a9 0x1054473b5]
+Mono: AOT: FOUND method System.Collections.HashHelpers:.cctor () [0x105396150 - 0x105396194 0x1054469a6]
+Mono: AOT: FOUND method System.Collections.HashHelpers:GetPrime (int) [0x105395fe0 - 0x1053960cf 0x105446991]
+Mono: AOT: FOUND method System.Collections.Generic.ObjectEqualityComparer`1:GetHashCode (T) [0x1053b9320 - 0x1053b934c 0x105447594]
+Mono: AOT: FOUND method System.RuntimeType:GetHashCode () [0x1050b5b90 - 0x1050b5c1a 0x1054308ae]
+Mono: AOT: FOUND method System.RuntimeType:get_MemberType () [0x1050b1a90 - 0x1050b1ac7 0x1054306ac]
+Mono: AOT: FOUND method System.Type:get_IsPublic () [0x1050d5ae0 - 0x1050d5b07 0x105431387]
+Mono: AOT: FOUND method System.RuntimeType:IsDefined (System.Type,bool) [0x1050b18a0 - 0x1050b1983 0x105430695]
+Mono: AOT: FOUND method System.Collections.Generic.ObjectEqualityComparer`1:Equals (T,T) [0x1053b92c0 - 0x1053b931b 0x105447592]
+Mono: AOT: FOUND method System.RuntimeType:Equals (object) [0x1050b16a0 - 0x1050b16c2 0x10543066e]
+Mono: AOT: FOUND method System.Text.StringBuilder:ExpandByABlock (int) [0x10511f490 - 0x10511f5f2 0x105433991]
+Mono: AOT: FOUND method System.Text.StringBuilder:.ctor (System.Text.StringBuilder) [0x10511f600 - 0x10511f67f 0x105433995]
+Mono: AOT: FOUND method System.Reflection.MonoCMethod:get_Name () [0x105154080 - 0x1051540ac 0x10543505f]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Reflection.MonoMethod:get_name (System.Reflection.MethodBase).
+Mono: AOT: FOUND method System.Reflection.MethodBase:get_IsGenericMethod () [0x105144b40 - 0x105144b4b 0x10543472f]
+Mono: AOT: FOUND method System.Reflection.MonoCMethod:GetParameters () [0x105153bf0 - 0x105153c09 0x105435045]
+Mono: AOT: FOUND method System.Reflection.MonoMethodInfo:GetParametersInfo (intptr,System.Reflection.MemberInfo) [0x1051528e0 - 0x1051528f7 0x105434fb6]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Reflection.MonoMethodInfo:get_parameter_info (intptr,System.Reflection.MemberInfo).
+Mono: AOT: FOUND method System.Reflection.ParameterInfo:get_ParameterType () [0x105156ec0 - 0x105156ed4 0x105435198]
+Mono: AOT: FOUND method System.Reflection.ParameterInfo:get_Name () [0x105157010 - 0x105157024 0x1054351a8]
+Mono: AOT: FOUND method System.RuntimeType:get_IsGenericTypeDefinition () [0x1050b0050 - 0x1050b0066 0x105430615]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:IsGenericTypeDefinition (System.RuntimeType).
+Mono: AOT: FOUND method System.RuntimeType:GetGenericTypeDefinition () [0x1050b00e0 - 0x1050b012d 0x105430624]
+Mono: AOT: FOUND method System.RuntimeTypeHandle:GetGenericTypeDefinition (System.RuntimeType) [0x1050f8d00 - 0x1050f8d12 0x105432a96]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.RuntimeTypeHandle:GetGenericTypeDefinition_impl (System.RuntimeType).
+Mono: AOT: FOUND method System.Diagnostics.StackFrame:GetILOffset () [0x10522bfe0 - 0x10522bff4 0x10543aa2b]
+Mono: AOT: FOUND method System.Text.StringBuilder:AppendFormat (string,object) [0x10511d6a0 - 0x10511d72d 0x10543393e]
+Mono: AOT: FOUND method System.NumberFormatter:ParsePrecision (string) [0x1050f1fd0 - 0x1050f2077 0x1054327ea]
+Mono: AOT: FOUND method System.Diagnostics.StackFrame:GetSecureFileName () [0x10522bf60 - 0x10522bfd1 0x10543aa27]
+Mono: AOT: FOUND method System.Diagnostics.StackFrame:GetFileName () [0x10522bf40 - 0x10522bf54 0x10543aa25]
+Mono: AOT: FOUND method System.Diagnostics.StackFrame:GetFileLineNumber () [0x10522bf00 - 0x10522bf14 0x10543aa21]
+Mono: AOT: FOUND method System.Text.StringBuilder:AppendFormat (string,object,object) [0x10511d730 - 0x10511d7c5 0x105433940]
+Mono: AOT: FOUND method System.Reflection.MonoMethod:get_DeclaringType () [0x1051532f0 - 0x10515330a 0x105435007]
+Mono: AOT: FOUND method System.Reflection.MethodInfo:get_MemberType () [0x105145880 - 0x10514588e 0x1054347bd]
+Mono: AOT: FOUND method System.Reflection.MonoMethod:IsDefined (System.Type,bool) [0x105153340 - 0x105153365 0x10543500b]
+Mono: AOT: FOUND method System.Reflection.MonoMethod:GetPseudoCustomAttributes () [0x1051533c0 - 0x1051534cd 0x105435011]
+Mono: AOT: FOUND method System.Reflection.MonoMethod:get_Name () [0x105153310 - 0x10515333c 0x105435009]
+Mono: AOT NOT FOUND: (wrapper managed-to-native) System.Reflection.MonoMethod:get_IsGenericMethod (System.Reflection.MonoMethod).
+Mono: AOT: FOUND method System.Reflection.MonoMethod:GetParameters () [0x105152e80 - 0x105152ee3 0x105434fed]
+Mono: AOT: FOUND method string:Concat (string,string) [0x1050bf2f0 - 0x1050bf3e4 0x105430bc0]
+Mono: file_data_close: closing fd 4
