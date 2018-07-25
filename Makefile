@@ -11,8 +11,8 @@ dis: FactorialProxy.dll
 FactorialProxy.dll: Parser.exe factorial.wasm Makefile
 	mono --debug Parser.exe factorial.wasm Factorial
 
-Parser.exe: Parser.cs Makefile Instruction.cs
-	mcs -debug Parser.cs Instruction.cs
+Parser.exe: Parser.cs Makefile Instruction.cs WebassemblyModule.dll
+	mcs -debug Parser.cs Instruction.cs -r:WebassemblyModule.dll
 
 .PHONY: aot
 aot: FactorialProxy.dll
@@ -38,3 +38,6 @@ run: FactorialProxy.dll
 .PHONY: clean
 clean:
 	- rm -rf Parser.exe
+
+WebassemblyModule.dll: WebassemblyModule.cs
+	mcs -t:library WebassemblyModule.cs

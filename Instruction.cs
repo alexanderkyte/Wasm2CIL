@@ -289,8 +289,10 @@ namespace Wasm2CIL {
 					return;
 
 				//// Call
-				//case 0x10:
-					//return ilgen.Emit (OpCodes.Nop);
+				case 0x10:
+					//ilgen.Emit (OpCodes.Nop);
+					//return;
+
 				//case 0x11:
 					//return ilgen.Emit (OpCodes.Nop);
 
@@ -346,8 +348,12 @@ namespace Wasm2CIL {
 			if (!this.StartsBlock ())
 				throw new Exception ("Does not create label");
 
-			if (Opcode == 0x05)
-				return this.dest.GetLabelName ();
+			if (Opcode == 0x05) {
+				if (this.dest != null)
+					return this.dest.GetLabelName ();
+				else
+					return "";
+			}
 
 			if (this.LabelIndex == null)
 				throw new Exception (String.Format ("Did not create label for 0x{0:x}", Opcode));
@@ -529,11 +535,42 @@ namespace Wasm2CIL {
 			// Fixme: use packed encodings (_s) and the opcodes that mention the index
 
 			if ((int) index < num_params) {
-				//Console.WriteLine ("ldarg {0}", index);
-				ilgen.Emit (OpCodes.Ldarg, index);
+				Console.WriteLine ("ldarg {0}", index);
+				// The +1 is because the first argument is the "this" argument
+				switch (index) {
+					case 0:
+						ilgen.Emit (OpCodes.Ldarg_1);
+						break;
+					case 1:
+						ilgen.Emit (OpCodes.Ldarg_2);
+						break;
+					case 2:
+						ilgen.Emit (OpCodes.Ldarg_3);
+						break;
+					default:
+						ilgen.Emit (OpCodes.Ldarg, index + 1);
+						break;
+				}
 			} else {
 				//Console.WriteLine ("ldloc {0}", labelIndex);
 				int labelIndex = (int) index - num_params;
+				switch (labelIndex) {
+					case 0:
+						ilgen.Emit (OpCodes.Ldarg_0);
+						break;
+					case 1:
+						ilgen.Emit (OpCodes.Ldarg_1);
+						break;
+					case 2:
+						ilgen.Emit (OpCodes.Ldarg_2);
+						break;
+					case 3:
+						ilgen.Emit (OpCodes.Ldarg_3);
+						break;
+					default:
+						ilgen.Emit (OpCodes.Ldarg, labelIndex);
+						break;
+				}
 				ilgen.Emit (OpCodes.Ldloc, labelIndex);
 			}
 		}
@@ -615,58 +652,111 @@ namespace Wasm2CIL {
 
 		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
+			switch (Opcode) {
+				//case 0x28:
+					//return "i32.load";
+				//case 0x29:
+					//return "i64.load";
+				//case 0x2a:
+					//return "f32.load";
+				//case 0x2b:
+					//return "f64.load";
+				//case 0x2c:
+					//return "i32.load8_s";
+				//case 0x2d:
+					//return "i32.load8_u";
+				//case 0x2e:
+					//return "i32.load16_s";
+				//case 0x2f:
+					//return "i32.load16_u";
+				//case 0x30:
+					//return "i64.load8_s";
+				//case 0x31:
+					//return "i64.load8_u";
+				//case 0x32:
+					//return "i64.load16_s";
+				//case 0x33:
+					//return "i64.load16_u";
+				//case 0x34:
+					//return "i64.load32_s";
+				//case 0x35:
+					//return "i64.load32_u";
+				//case 0x36:
+					//return "i32.store";
+				//case 0x37:
+					//return "i64.store";
+				//case 0x38:
+					//return "f32.store";
+				//case 0x39:
+					//return "f64.store";
+				//case 0x3a:
+					//return "i32.store8";
+				//case 0x3b:
+					//return "i32.store16";
+				//case 0x3c:
+					//return "i64.store8";
+				//case 0x3d:
+					//return "i64.store16";
+				//case 0x3e:
+					//return "i64.store32";
+				//case 0x3f:
+					//return "current_memory";
+				//case 0x40:
+					//return "grow_memory";
+				default:
+					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
+			}
 		}
 
 		public override string ToString () 
 		{
 			switch (Opcode) {
 				case 0x28:
-					return "i32.load";
+					return String.Format ("i32.load {0} {1}", this.align, this.offset);
 				case 0x29:
-					return "i64.load";
+					return String.Format ("i64.load {0} {1}", this.align, this.offset);
 				case 0x2a:
-					return "f32.load";
+					return String.Format ("f32.load {0} {1}", this.align, this.offset);
 				case 0x2b:
-					return "f64.load";
+					return String.Format ("f64.load {0} {1}", this.align, this.offset);
 				case 0x2c:
-					return "i32.load8_s";
+					return String.Format ("i32.load8_s {0} {1}", this.align, this.offset);
 				case 0x2d:
-					return "i32.load8_u";
+					return String.Format ("i32.load8_u {0} {1}", this.align, this.offset);
 				case 0x2e:
-					return "i32.load16_s";
+					return String.Format ("i32.load16_s {0} {1}", this.align, this.offset);
 				case 0x2f:
-					return "i32.load16_u";
+					return String.Format ("i32.load16_u {0} {1}", this.align, this.offset);
 				case 0x30:
-					return "i64.load8_s";
+					return String.Format ("i64.load8_s {0} {1}", this.align, this.offset);
 				case 0x31:
-					return "i64.load8_u";
+					return String.Format ("i64.load8_u {0} {1}", this.align, this.offset);
 				case 0x32:
-					return "i64.load16_s";
+					return String.Format ("i64.load16_s {0} {1}", this.align, this.offset);
 				case 0x33:
-					return "i64.load16_u";
+					return String.Format ("i64.load16_u {0} {1}", this.align, this.offset);
 				case 0x34:
-					return "i64.load32_s";
+					return String.Format ("i64.load32_s {0} {1}", this.align, this.offset);
 				case 0x35:
-					return "i64.load32_u";
+					return String.Format ("i64.load32_u {0} {1}", this.align, this.offset);
 				case 0x36:
-					return "i32.store";
+					return String.Format ("i32.store {0} {1}", this.align, this.offset);
 				case 0x37:
-					return "i64.store";
+					return String.Format ("i64.store {0} {1}", this.align, this.offset);
 				case 0x38:
-					return "f32.store";
+					return String.Format ("f32.store {0} {1}", this.align, this.offset);
 				case 0x39:
-					return "f64.store";
+					return String.Format ("f64.store {0} {1}", this.align, this.offset);
 				case 0x3a:
-					return "i32.store8";
+					return String.Format ("i32.store8 {0} {1}", this.align, this.offset);
 				case 0x3b:
-					return "i32.store16";
+					return String.Format ("i32.store16 {0} {1}", this.align, this.offset);
 				case 0x3c:
-					return "i64.store8";
+					return String.Format ("i64.store8 {0} {1}", this.align, this.offset);
 				case 0x3d:
-					return "i64.store16";
+					return String.Format ("i64.store16 {0} {1}", this.align, this.offset);
 				case 0x3e:
-					return "i64.store32";
+					return String.Format ("i64.store32 {0} {1}", this.align, this.offset);
 				case 0x3f:
 					return "current_memory";
 				case 0x40:
@@ -822,8 +912,9 @@ namespace Wasm2CIL {
 					//return "f32.ne";
 				//case 0x5d:
 					//return "f32.lt";
-				//case 0x5e:
-					//return "f32.gt";
+				case 0x5e:
+					ilgen.Emit (OpCodes.Cgt);
+					return;
 				//case 0x5f:
 					//return "f32.le";
 				//case 0x60:
@@ -842,8 +933,16 @@ namespace Wasm2CIL {
 					//return "f64.ge";
 				//case 0x67:
 					//return "i32.clz";
-				//case 0x68:
+				case 0x68:
+					// We will use Reiser's CTZ implementation here.
+					//int lookup_table = new int [] { -1, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13, 4, 7, 17, 0, 25, 22, 31, 15, 29, 10, 12, 6, 0, 21, 14, 9, 5, 20, 8, 19, 18 };
+					//return (-n & n) % 37
 					//return "i32.ctz";
+					
+					// It's int->int so NOP is an okay mock
+					ilgen.Emit (OpCodes.Nop);
+					return;
+
 				//case 0x69:
 					//return "i32.popcnt";
 				case 0x6a:

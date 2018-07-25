@@ -268,7 +268,7 @@ namespace Wasm2CIL {
 		{
 			var param_types = type.EmitParams ();
 			var return_type = type.EmitReturn ();
-			var method = tb.DefineMethod (name, MethodAttributes.Static | MethodAttributes.Public, return_type, param_types);
+			var method = tb.DefineMethod (name, MethodAttributes.Public, return_type, param_types);
 			var ilgen = method.GetILGenerator ();
 
 			var outputLocals = new LocalBuilder [num_locals];
@@ -373,7 +373,22 @@ namespace Wasm2CIL {
 			var outputFileName = assemblyName + outputFileExtension;
 			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, outputFileName);
 
-			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public);
+			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public, typeof (WebassemblyModule));
+
+			var constructor = tb.DefineConstructor (MethodAttributes.Public, CallingConventions.Standard, new Type []{});
+			var ctor_gen = constructor.GetILGenerator();
+
+			// the constructor gets the "this" pointer
+			ctor_gen.Emit(OpCodes.Ldarg_0);
+
+			// Next arg is the size
+			if (mem != null)
+				ctor_gen.Emit(OpCodes.Ldc_I4, mem.limit.min);
+			else
+				ctor_gen.Emit(OpCodes.Ldc_I4_0);
+
+			ctor_gen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetConstructor (new Type[] { typeof (int) }));
+			ctor_gen.Emit(OpCodes.Ret);
 
 			// fixme: imports / exports?
 			for (int i=0; i < exprs.Length; i++) {
