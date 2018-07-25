@@ -298,6 +298,8 @@ namespace Wasm2CIL {
 		{
 			Body = new WebassemblyCodeParser (reader);
 
+			Console.WriteLine ("Parsed: {0}, Body.ToString ()");
+
 			if (readToEnd && (reader.BaseStream.Position != reader.BaseStream.Length))
 				throw new Exception ("Didn't actually read to end");
 		}

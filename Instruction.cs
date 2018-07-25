@@ -32,8 +32,28 @@ namespace Wasm2CIL {
 			}
 		}
 
-		public void Add (WebassemblyInstruction instr) {
+		public void Add (WebassemblyInstruction instr, ref int depth) {
+			if (instr == null)
+				throw new Exception ("Cannot add null instructions");
+
 			BodyBuilder.Add (instr);
+
+			var brancher = instr as WebassemblyControlInstruction;
+			if (brancher == null)
+				return;
+
+			if (brancher.EndsBlock ()) {
+				//Console.WriteLine ("End block");
+				// Tracks whether we've hit the extra 0x0b that marks end-of-function
+				depth -= 1;
+				if (depth != -1)
+					LabelStack.RemoveAt (LabelStack.Count - 1);
+			} 
+			if (brancher.StartsBlock ()) {
+				//Console.WriteLine ("Start block");
+				depth += 1;
+				LabelStack.Add (brancher);
+			}
 		}
 
 		private int CurrLabel; // Incremented by control instructions
@@ -58,8 +78,6 @@ namespace Wasm2CIL {
 
 		public void ParseExpression (BinaryReader reader)
 		{
-			Console.WriteLine ("New parsing stack!");
-
 			int start = BodyBuilder.Count;
 
 			if (this.finished)
@@ -73,27 +91,18 @@ namespace Wasm2CIL {
 			int depth = 0;
 
 			while (depth >= 0 && (reader.BaseStream.Position != reader.BaseStream.Length)) {
+				if (depth > LabelStack.Count)
+					throw new Exception (String.Format ("Depth {0} exceeds number of labels on stack {1}", depth, LabelStack.Count));
+
+				Console.WriteLine ("Depth {0} and number of labels on stack {1}", depth, LabelStack.Count);
+
 				WebassemblyInstruction result = null;
 				byte opcode = reader.ReadByte ();
 
 				if (opcode <= WebassemblyControlInstruction.UpperBound ()) {
-					// Needs the stack to turn indexes into references to basic blocks
-					var control_result = new WebassemblyControlInstruction (opcode, reader, LabelStack, ref CurrLabel, this);
-
-					if (control_result.StartsBlock ()) {
-						//Console.WriteLine ("Start block");
-						depth += 1;
-						LabelStack.Add (control_result);
-					} else if (control_result.EndsBlock ()) {
-						//Console.WriteLine ("End block");
-						// Tracks whether we've hit the extra 0x0b that marks end-of-function
-						depth -= 1;
-						if (LabelStack.Count > 0)
-							LabelStack.RemoveAt (LabelStack.Count - 1);
-					} 
-
 					// The appending is done inside the control instruction so that it can ensure ordering
-					result = null;
+					// So we don't assign to result
+					new WebassemblyControlInstruction (opcode, reader, LabelStack, ref CurrLabel, this, ref depth);
 				} else if (opcode <= WebassemblyParametricInstruction.UpperBound ()) {
 					result = new WebassemblyParametricInstruction (opcode, reader);
 				} else if (opcode <= WebassemblyVariableInstruction.UpperBound ()) {
@@ -106,13 +115,9 @@ namespace Wasm2CIL {
 					throw new Exception (String.Format ("Illegal instruction {0:X}", opcode));
 				}
 
-				if (result != null)
-					BodyBuilder.Add (result);
-
-				//if (depth >= 0)
-					//Console.WriteLine ("{0}{1}", new String (' ', depth + 1), result.ToString ());
-				//else
-					//Console.WriteLine (" {0}", result.ToString ());
+				if (result != null) {
+					Add (result, ref depth);
+				}
 			}
 
 			Console.WriteLine ("Parsed {0} wasm instructions", BodyBuilder.Count - start);
@@ -146,7 +151,7 @@ namespace Wasm2CIL {
 	public class WebassemblyControlInstruction : WebassemblyInstruction
 	{
 		Label label;
-		public readonly int LabelIndex;
+		public readonly int? LabelIndex;
 
 		ulong [] table;
 		ulong index;
@@ -154,7 +159,7 @@ namespace Wasm2CIL {
 		Type block_type;
 		ulong function_index;
 		ulong type_index;
-		WebassemblyControlInstruction dest;
+		public WebassemblyControlInstruction dest;
 
 		bool loops;
 
@@ -250,8 +255,9 @@ namespace Wasm2CIL {
 					ilgen.MarkLabel (fallthrough_label);
 					return;
 
-				//case 0x05: // Else
-					//return ilgen.Emit (OpCodes.Nop);
+				case 0x05: // Else
+					ilgen.Emit (OpCodes.Nop);
+					return;
 
 				case 0x0b: // End
 					// loops fall through
@@ -306,7 +312,11 @@ namespace Wasm2CIL {
 				case 0x03:
 					return String.Format ("loop {0} {1}", block_type, GetLabelName ());
 				case 0x04:
-					return String.Format ("if Type: {0}", block_type);
+					var block_type_str = "";
+					if (block_type != null)
+						block_type_str = String.Format ("Type: {0}", block_type);
+
+					return String.Format ("if {0} {1}", block_type, GetLabelName ());
 				case 0x05:
 					return "else";
 				case 0x0b:
@@ -336,6 +346,12 @@ namespace Wasm2CIL {
 			if (!this.StartsBlock ())
 				throw new Exception ("Does not create label");
 
+			if (Opcode == 0x05)
+				return this.dest.GetLabelName ();
+
+			if (this.LabelIndex == null)
+				throw new Exception (String.Format ("Did not create label for 0x{0:x}", Opcode));
+
 			return String.Format ("@{0}", this.LabelIndex);
 		}
 
@@ -352,7 +368,7 @@ namespace Wasm2CIL {
 
 		public bool StartsBlock ()
 		{
-			return Opcode == 0x02 || Opcode == 0x03 || Opcode == 0x04;
+			return Opcode == 0x02 || Opcode == 0x03 || Opcode == 0x04 || Opcode == 0x05;
 		}
 
 		public bool EndsBlock ()
@@ -365,17 +381,12 @@ namespace Wasm2CIL {
 			return 0x11;
 		}
 
-		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyControlInstruction> labels, ref int labelIndex, WebassemblyCodeParser parser): base (opcode)
+		public WebassemblyControlInstruction (byte opcode, BinaryReader reader, List<WebassemblyControlInstruction> labels, ref int labelIndex, WebassemblyCodeParser parser, ref int depth): base (opcode)
 		{
-			// Ensure this opcode comes before nested/subsequent blocks
-			parser.Add (this);
-
 			switch (this.Opcode) {
-				case 0x05: // else
 				case 0x0B: // end
-					var index = labels.Count - 1;
-					if (index < labels.Count && index > 0)
-						this.dest = labels [index];
+				case 0x05: // else
+					// dest set by if statement
 					break;
 				case 0x0: // unreachable
 				case 0x1: // nop
@@ -392,6 +403,7 @@ namespace Wasm2CIL {
 					// to preverse all the ordering in the initial instruction stream.
 					// When we emit this instruction, dest will already have had a label emitted.
 					this.index = Parser.ParseLEBUnsigned (reader, 32);
+					Console.WriteLine ("index {0}", this.index);
 
 					if (labels.Count == 0)
 						throw new Exception ("Branching with empty label stack!");
@@ -401,7 +413,9 @@ namespace Wasm2CIL {
 						throw new Exception (String.Format ("branch label of {0} {1} {2} not acceptable", labels.Count, this.index, offset));
 
 					this.dest = labels [offset];
-					
+					if (this.dest == null)
+						throw new Exception ("Could not find destination of jump");
+
 					break;
 
 				case 0x02: // block
@@ -419,6 +433,9 @@ namespace Wasm2CIL {
 					break;
 
 				case 0x04: // if
+					// Ensure this opcode comes before nested/subsequent blocks
+					this.LabelIndex = labelIndex++;
+					parser.Add (this, ref depth);
 					this.block_type = WebassemblyResult.Convert (reader);
 
 					// We have a stack of "expressions" we are writing to
@@ -432,15 +449,16 @@ namespace Wasm2CIL {
 						this.else_block.dest = this.if_block;
 						Console.WriteLine ("Else is {0}", this.else_block.ToString ());
 						parser.ParseExpression (reader);
-					} else if (parser.Current ().Opcode != 0x0B) {
-						throw new Exception (String.Format ("If statement terminated with illegal opcode 0x0{0:X}", parser.Current ().Opcode));
-					}
-
+					} 
+					
 					this.fallthrough_block = (WebassemblyControlInstruction) parser.Current ();
+					if (this.fallthrough_block.Opcode != 0x0B)
+						throw new Exception (String.Format ("If statement terminated with illegal opcode 0x0{0:X}", parser.Current ().Opcode));
+
 					this.fallthrough_block.dest = this.if_block;
 					Console.WriteLine ("Fallthrough is {0}", this.fallthrough_block.ToString ());
 
-					break;
+					return; // Don't double-add the instruction
 
 				case 0x0e: // br_table
 					// works by getting index from stack. If index is in range of table,
@@ -460,6 +478,9 @@ namespace Wasm2CIL {
 				default:
 					throw new Exception (String.Format ("Control instruction out of range {0:X}", this.Opcode));
 			}
+
+			// Ensure this opcode comes before nested/subsequent blocks
+			parser.Add (this, ref depth);
 		}
 	}
 
