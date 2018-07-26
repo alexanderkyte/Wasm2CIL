@@ -290,8 +290,8 @@ namespace Wasm2CIL {
 
 				//// Call
 				case 0x10:
-					//ilgen.Emit (OpCodes.Nop);
-					//return;
+					ilgen.Emit (OpCodes.Nop);
+					return;
 
 				//case 0x11:
 					//return ilgen.Emit (OpCodes.Nop);
@@ -652,60 +652,99 @@ namespace Wasm2CIL {
 
 		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
+			// Right now, we have an address on the top of the stack
+
+			// Our opcode has an offset to apply to this address
+			// FIXME: we ignore alignment
+			ilgen.Emit (OpCodes.Ldc_I8, offset);
+			ilgen.Emit (OpCodes.Add);
+
+			// Get the object reference as the last argument to the call...
+			ilgen.Emit (OpCodes.Ldarg_0);
 			switch (Opcode) {
-				//case 0x28:
-					//return "i32.load";
-				//case 0x29:
-					//return "i64.load";
-				//case 0x2a:
-					//return "f32.load";
-				//case 0x2b:
-					//return "f64.load";
-				//case 0x2c:
-					//return "i32.load8_s";
-				//case 0x2d:
-					//return "i32.load8_u";
-				//case 0x2e:
-					//return "i32.load16_s";
-				//case 0x2f:
-					//return "i32.load16_u";
-				//case 0x30:
-					//return "i64.load8_s";
-				//case 0x31:
-					//return "i64.load8_u";
-				//case 0x32:
-					//return "i64.load16_s";
-				//case 0x33:
-					//return "i64.load16_u";
-				//case 0x34:
-					//return "i64.load32_s";
-				//case 0x35:
-					//return "i64.load32_u";
-				//case 0x36:
-					//return "i32.store";
-				//case 0x37:
-					//return "i64.store";
-				//case 0x38:
-					//return "f32.store";
-				//case 0x39:
-					//return "f64.store";
-				//case 0x3a:
-					//return "i32.store8";
-				//case 0x3b:
-					//return "i32.store16";
-				//case 0x3c:
-					//return "i64.store8";
-				//case 0x3d:
-					//return "i64.store16";
-				//case 0x3e:
-					//return "i64.store32";
-				//case 0x3f:
-					//return "current_memory";
-				//case 0x40:
-					//return "grow_memory";
+				case 0x28:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Load32BitAsSigned32"));
+					return;
+				case 0x29:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Load64BitAsSigned64"));
+					return;
+				case 0x2a:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSingle"));
+					return;
+				case 0x2b:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadDouble"));
+					return;
+				case 0x2c:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned8BitAsSigned32"));
+					return;
+				case 0x2d:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned8BitAsSigned32"));
+					return;
+				case 0x2e:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned16BitAsSigned32"));
+					return;
+				case 0x2f:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned16BitAsSigned32"));
+					return;
+				case 0x30:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned8BitAsSigned64"));
+					return;
+				case 0x31:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned8BitAsSigned64"));
+					return;
+				case 0x32:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned16BitAsSigned64"));
+					return;
+				case 0x33:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned16BitAsSigned64"));
+					return;
+				case 0x34:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned32BitAsSigned64"));
+					return;
+				case 0x35:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned32BitAsSigned64"));
+					return;
+
+				case 0x36:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store32BitFrom32"));
+					return;
+				case 0x37:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store64BitFrom32"));
+					return;
+				case 0x38:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("StoreSingle"));
+					return;
+				case 0x39:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("StoreDouble"));
+					return;
+
+				case 0x3a:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store8BitFrom32"));
+					return;
+				case 0x3b:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store16BitFrom32"));
+					return;
+				case 0x3c:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store8BitFrom64"));
+					return;
+				case 0x3d:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store16BitFrom64"));
+					return;
+				case 0x3e:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store32BitFrom64"));
+					return;
+
+				case 0x3f:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("CurrentMemory"));
+					return;
+				case 0x40:
+					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("GrowMemory"));
+					return;
 				default:
 					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
+
+			return;
 		}
 
 		public override string ToString () 
@@ -794,31 +833,31 @@ namespace Wasm2CIL {
 				case 0x41:
 					switch (operand_i32) {
 						case 0:
-							ilgen.Emit (OpCodes.Ldc_I4_0, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_0);
 							break;
 						case 1:
-							ilgen.Emit (OpCodes.Ldc_I4_1, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_1);
 							break;
 						case 2:
-							ilgen.Emit (OpCodes.Ldc_I4_2, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_2);
 							break;
 						case 3:
-							ilgen.Emit (OpCodes.Ldc_I4_3, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_3);
 							break;
 						case 4:
-							ilgen.Emit (OpCodes.Ldc_I4_4, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_4);
 							break;
 						case 5:
-							ilgen.Emit (OpCodes.Ldc_I4_5, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_5);
 							break;
 						case 6:
-							ilgen.Emit (OpCodes.Ldc_I4_6, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_6);
 							break;
 						case 7:
-							ilgen.Emit (OpCodes.Ldc_I4_7, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_7);
 							break;
 						case 8:
-							ilgen.Emit (OpCodes.Ldc_I4_8, operand_i32);
+							ilgen.Emit (OpCodes.Ldc_I4_8);
 							break;
 						default:
 							ilgen.Emit (OpCodes.Ldc_I4, operand_i32);
