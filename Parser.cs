@@ -133,21 +133,23 @@ namespace Wasm2CIL {
 		}
 	}
 
-    public class WebassemblyImport
-    {
-        public readonly string module;
-        public readonly string name;
-        public readonly int kind;
-        public readonly ulong index;
+	public class WebassemblyImport
+	{
+		public readonly string module;
+		public readonly string name;
+		public readonly int kind;
+		public readonly ulong index;
 
-        public WebassemblyImport(BinaryReader reader)
-        {
-            module = Parser.ReadString(reader);
-            name = Parser.ReadString(reader);
-            kind = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 7));
-            index = Parser.ParseLEBUnsigned(reader,32);
-        }
-    }
+		public WebassemblyImport(BinaryReader reader)
+		{
+			module = Parser.ReadString(reader);
+			name = Parser.ReadString(reader);
+			kind = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 7));
+
+			if (kind == 0x0)
+				index = Parser.ParseLEBUnsigned(reader,32);
+		}
+	}
 
 	public class WebassemblyMemory
 	{
@@ -186,19 +188,19 @@ namespace Wasm2CIL {
 		}
 	}
 
-    public class WebassemblyExport
-    {
-        public readonly string name;
-        public readonly uint kind;
-        public readonly ulong index;
+	public class WebassemblyExport
+	{
+		public readonly string name;
+		public readonly uint kind;
+		public readonly ulong index;
 
-        public WebassemblyExport (BinaryReader reader)
-        {
-            name = Parser.ReadString(reader);
-            kind = Convert.ToUInt32(Parser.ParseLEBUnsigned(reader, 8));
-            index = Parser.ParseLEBUnsigned(reader, 32);
-        }
-    }
+		public WebassemblyExport (BinaryReader reader)
+		{
+			name = Parser.ReadString(reader);
+			kind = Convert.ToUInt32(Parser.ParseLEBUnsigned(reader, 8));
+			index = Parser.ParseLEBUnsigned(reader, 32);
+		}
+	}
 
 	public class WebassemblyElementInit
 	{
@@ -268,7 +270,7 @@ namespace Wasm2CIL {
 		{
 			var param_types = type.EmitParams ();
 			var return_type = type.EmitReturn ();
-			var method = tb.DefineMethod (name, MethodAttributes.Static | MethodAttributes.Public, return_type, param_types);
+			var method = tb.DefineMethod (name, MethodAttributes.Public, return_type, param_types);
 			var ilgen = method.GetILGenerator ();
 
 			var outputLocals = new LocalBuilder [num_locals];
@@ -280,7 +282,7 @@ namespace Wasm2CIL {
 					outputLocals [index++] = ilgen.DeclareLocal (ty);
 			}
 
-			expr.Body.Emit (ilgen, param_types.Length);
+			expr.Body.Emit (ilgen, param_types != null ? param_types.Length : 0);
 
 			return method;
 		}
@@ -288,7 +290,7 @@ namespace Wasm2CIL {
 
 	public class WebassemblyExpression
 	{
-		public readonly WebassemblyFunctionBody Body;
+		public readonly WebassemblyCodeParser Body;
 
 		public WebassemblyExpression (BinaryReader reader): this (reader, false)
 		{
@@ -296,7 +298,9 @@ namespace Wasm2CIL {
 
 		public WebassemblyExpression (BinaryReader reader, bool readToEnd) 
 		{
-			Body = new WebassemblyFunctionBody (reader);
+			Body = new WebassemblyCodeParser (reader);
+
+			Console.WriteLine ("Parsed: {0}, Body.ToString ()");
 
 			if (readToEnd && (reader.BaseStream.Position != reader.BaseStream.Length))
 				throw new Exception ("Didn't actually read to end");
@@ -371,30 +375,59 @@ namespace Wasm2CIL {
 			var outputFileName = assemblyName + outputFileExtension;
 			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, outputFileName);
 
-			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public);
+			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public, typeof (WebassemblyModule));
+
+			var constructor = tb.DefineConstructor (MethodAttributes.Public, CallingConventions.Standard, new Type []{});
+			var ctor_gen = constructor.GetILGenerator();
+
+			// the constructor gets the "this" pointer
+			ctor_gen.Emit(OpCodes.Ldarg_0);
+
+			// Next arg is the size
+			if (mem != null)
+				ctor_gen.Emit(OpCodes.Ldc_I4, mem.limit.min);
+			else
+				ctor_gen.Emit(OpCodes.Ldc_I4_0);
+
+			ctor_gen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetConstructor (new Type[] { typeof (int) }));
+			ctor_gen.Emit(OpCodes.Ret);
+
+			// Compute exports
+			var export_table = new Dictionary<int, string> ();
+			if (exports != null) {
+				foreach (var exp in exports) {
+					if (exp.kind == 0x0) // function export
+						export_table [Convert.ToInt32 (exp.index)] = exp.name;
+				}
+			}
 
 			// fixme: imports / exports?
 			for (int i=0; i < exprs.Length; i++) {
 				var fn = exprs [i];
 				var type = types [fn_to_type [i]];
-				var fn_name = String.Format ("Function{0}", i);
+				string fn_name;
+				if (export_table.ContainsKey (i))
+					fn_name = export_table [i];
+				else
+					fn_name = String.Format ("Function{0}", i);
 				var emitted = fn.Emit (type, tb, fn_name);
-
-				var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
-				var dummy_gen = dummy_entry.GetILGenerator ();
-				dummy_gen.Emit(OpCodes.Ldarg, 0);
-				dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
-				dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
-				dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
-				dummy_gen.Emit(OpCodes.Call, emitted);
-				dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
-				dummy_gen.Emit(OpCodes.Ret);
-				ab.SetEntryPoint (dummy_entry);
-
-				tb.CreateType ();
 			}
 
+				//var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
+				//var dummy_gen = dummy_entry.GetILGenerator ();
+				//dummy_gen.Emit(OpCodes.Ldarg, 0);
+				//dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
+				//dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
+				//dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
+				//dummy_gen.Emit(OpCodes.Call, emitted);
+				//dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
+				//dummy_gen.Emit(OpCodes.Ret);
+				//ab.SetEntryPoint (dummy_entry);
+			tb.CreateType ();
+
 			ab.Save (outputFileName);
+
+			//return Assembly.LoadFrom (outputFileName);
 		}
 
 		public void ParseTypeSection (BinaryReader reader)
@@ -431,7 +464,7 @@ namespace Wasm2CIL {
 			exprs = new WebassemblyFunc [count];
 
 			for (int i=0; i < count; i++) {
-				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBSigned (sectionReader, 32));
+				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBUnsigned (sectionReader, 32));
 				// doing now so I can parallelize lower parsing later
 				byte [] entry = sectionReader.ReadBytes (size_of_entry);
 
@@ -500,25 +533,25 @@ namespace Wasm2CIL {
 
 		public void ParseImportSection(BinaryReader reader)
 		{
-            var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
-            this.imports = new WebassemblyImport [count];
+			var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
+			this.imports = new WebassemblyImport [count];
 
-            for (int i = 0; i < count; i++)
-                this.imports[i] = new WebassemblyImport(reader);
+			for (int i = 0; i < count; i++)
+				this.imports[i] = new WebassemblyImport(reader);
 
-            Console.WriteLine("Parsed import section, {0}", count);
-        }
+			Console.WriteLine("Parsed import section, {0}", count);
+		}
 
-        public void ParseExportSection(BinaryReader reader)
+		public void ParseExportSection(BinaryReader reader)
 		{
-            var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
-            this.exports = new WebassemblyExport [count];
+			var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
+			this.exports = new WebassemblyExport [count];
 
-            for (int i = 0; i < count; i++)
-                this.exports[i] = new WebassemblyExport(reader);
+			for (int i = 0; i < count; i++)
+				this.exports[i] = new WebassemblyExport(reader);
 
-            Console.WriteLine("Parsed export section, {0}", count);
-        }
+			Console.WriteLine("Parsed export section, {0}", count);
+		}
 
 		public void ParseSection (int section_num, byte [] section)
 		{
@@ -677,7 +710,7 @@ namespace Wasm2CIL {
 			{
 				Console.WriteLine("Error: {0}", ioEx.Message);
 			}
-            Console.ReadKey();
+            //Console.ReadKey();
 		}
 	}
 }
