@@ -188,7 +188,7 @@ namespace Wasm2CIL {
 		Label label;
 		public readonly int? LabelIndex;
 
-		ulong [] table;
+		Label [] table;
 		ulong index;
 		ulong default_target;
 		Type block_type;
@@ -316,8 +316,29 @@ namespace Wasm2CIL {
 					return;
 
 				// Br_table
-				//case 0x0e:
-					//return ilgen.Emit (OpCodes.Nop);
+				case 0x0e:
+					Label defaultCase = ilgen.DefineLabel();
+					Label endOfBlock = ilgen.DefineLabel();
+
+					for (int i=0; i < this.table.Length; i++) {
+						jumpTable [i] = ilgen.DefineLabel();
+					}
+
+					ilgen.Emit (OpCodes.Switch, jumpTable);
+					ilgen.Emit (OpCodes.Br_S, defaultCase); 
+
+					for (int i=0; i < jumpTable.Length; i++) {
+						// Case incoming argument is equal to i
+						ilgen.MarkLabel (jumpTable [i]);
+						ilgen.Emit (OpCodes.Br_S, this.table);
+					}
+
+					ilgen.MarkLabel (defaultCase);
+					ilgen.Emit(OpCodes.Br_S, jumpTable [Convert.ToInt32 (this.default_target)]);
+
+					ilgen.MarkLabel(endOfBlock);
+
+					return ilgen.Emit (OpCodes.Nop)
 
 				case 0x0f:
 					ilgen.Emit (OpCodes.Ret);
@@ -325,8 +346,8 @@ namespace Wasm2CIL {
 
 				//// Call
 				case 0x10:
-					ilgen.Emit (OpCodes.Nop);
-					return;
+					//ilgen.Emit (OpCodes.Nop);
+					//return;
 
 				//case 0x11:
 					//return ilgen.Emit (OpCodes.Nop);
@@ -504,9 +525,22 @@ namespace Wasm2CIL {
 				case 0x0e: // br_table
 					// works by getting index from stack. If index is in range of table,
 					// we jump to the label at that index. Else go to default.
-					this.table = Parser.ParseLEBUnsignedArray (reader);
-					this.default_target = Parser.ParseLEBUnsigned (reader, 32);
+					var jump_labels = Parser.ParseLEBUnsignedArray (reader);
+					this.table = new Label [jump_labels.Length];
+
+					if (labels.Count == 0)
+						throw new Exception ("Branching with empty label stack!");
+
+					for (int i=0; i < labels.Length; i++) {
+						int offset = (labels.Count - 1) - (int) jump_table [i];
+						this.table [i] = labels [offset];
+						if (this.table [i] == null)
+							throw new Exception ("Could not find destination of jump table");
+					}
+
+					this.default_target = labels [offset];
 					break;
+
 				case 0x10: //call
 					this.function_index = Parser.ParseLEBUnsigned (reader, 32);
 					break;
