@@ -188,7 +188,7 @@ namespace Wasm2CIL {
 		Label label;
 		public readonly int? LabelIndex;
 
-		Label [] table;
+		WebassemblyControlInstruction [] table;
 		ulong index;
 		ulong default_target;
 		Type block_type;
@@ -319,6 +319,7 @@ namespace Wasm2CIL {
 				case 0x0e:
 					Label defaultCase = ilgen.DefineLabel();
 					Label endOfBlock = ilgen.DefineLabel();
+					var jumpTable = new Label [this.table.Length];
 
 					for (int i=0; i < this.table.Length; i++) {
 						jumpTable [i] = ilgen.DefineLabel();
@@ -330,7 +331,7 @@ namespace Wasm2CIL {
 					for (int i=0; i < jumpTable.Length; i++) {
 						// Case incoming argument is equal to i
 						ilgen.MarkLabel (jumpTable [i]);
-						ilgen.Emit (OpCodes.Br_S, this.table);
+						ilgen.Emit (OpCodes.Br_S, this.table[i].dest.GetLabel ());
 					}
 
 					ilgen.MarkLabel (defaultCase);
@@ -338,7 +339,7 @@ namespace Wasm2CIL {
 
 					ilgen.MarkLabel(endOfBlock);
 
-					return ilgen.Emit (OpCodes.Nop)
+					return;
 
 				case 0x0f:
 					ilgen.Emit (OpCodes.Ret);
@@ -457,6 +458,7 @@ namespace Wasm2CIL {
 					break;
 				case 0x0C: // br
 				case 0x0D: // br_if
+				{
 					// So these indexes are labels
 					// each loop, block, 
 
@@ -480,6 +482,7 @@ namespace Wasm2CIL {
 
 					break;
 
+				}
 				case 0x02: // block
 					// need to make label 
 					this.block_type = WebassemblyResult.Convert (reader);
@@ -526,19 +529,22 @@ namespace Wasm2CIL {
 					// works by getting index from stack. If index is in range of table,
 					// we jump to the label at that index. Else go to default.
 					var jump_labels = Parser.ParseLEBUnsignedArray (reader);
-					this.table = new Label [jump_labels.Length];
+					this.table = new WebassemblyControlInstruction [jump_labels.Length];
 
 					if (labels.Count == 0)
 						throw new Exception ("Branching with empty label stack!");
 
-					for (int i=0; i < labels.Length; i++) {
-						int offset = (labels.Count - 1) - (int) jump_table [i];
+					for (int i=0; i < jump_labels.Length; i++) {
+						// The entry for the switch statement has an index that defines the
+						// label of the block to jump to there. It is a reverse count from
+						// the current block, much like all other BR opcodes
+						int offset = (labels.Count () - 1) - (int) jump_labels [i];
 						this.table [i] = labels [offset];
 						if (this.table [i] == null)
 							throw new Exception ("Could not find destination of jump table");
 					}
 
-					this.default_target = labels [offset];
+					this.default_target = Parser.ParseLEBUnsigned (reader, 32);;
 					break;
 
 				case 0x10: //call
