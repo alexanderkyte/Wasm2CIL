@@ -37,179 +37,212 @@ namespace Wasm2CIL {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load64BitAsSigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt64 (self.Copy (offset, 8), 0);
+		protected long Load64BitAsSigned64 (int offset) {
+			return BitConverter.ToInt64 (this.Copy (offset, 8), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load32BitAsSigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt64 (self.Copy (offset, 4), 0);
+		protected long Load32BitAsSigned64 (int offset) {
+			return BitConverter.ToInt64 (this.Copy (offset, 4), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load16BitAsSigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt64 (self.Copy (offset, 2), 0);
+		protected long LoadSigned16BitAsSigned64 (int offset) {
+			return BitConverter.ToInt64 (this.Copy (offset, 2), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load8BitAsSigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt64 (self.Copy (offset, 1), 0);
+		protected long LoadUnsigned16BitAsSigned64 (int offset) {
+			return BitConverter.ToInt64 (this.Copy (offset, 2), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load64BitAsUnsigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt64 (self.Copy (offset, 8), 0);
+		protected long LoadSigned8BitAsSigned64 (int offset) {
+			return BitConverter.ToInt64 (this.Copy (offset, 1), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load32BitAsUnsigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt64(self.Copy (offset, 4), 0);
+		protected long LoadUnsigned8BitAsSigned64 (int offset) {
+			return BitConverter.ToInt64 (this.Copy (offset, 1), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load16BitAsUnsigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt64(self.Copy (offset, 2), 0);
+		protected ulong Load64BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64 (this.Copy (offset, 8), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load8BitAsUnsigned64 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt64(self.Copy (offset, 1), 0);
+		protected ulong LoadUnsigned32BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64(this.Copy (offset, 4), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load32BitAsSigned32 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt32(self.Copy (offset, 4), 0);
+		protected ulong LoadSigned32BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64(this.Copy (offset, 4), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load16BitAsSigned32 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt32(self.Copy (offset, 2), 0);
+		protected ulong LoadUnsigned16BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64(this.Copy (offset, 2), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static long Load8BitAsSigned32 (int offset, WebassemblyModule self) {
-			return BitConverter.ToInt32(self.Copy (offset, 1), 0);
+		protected ulong LoadSigned16BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64(this.Copy (offset, 2), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load32BitAsUnsigned32 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt32(self.Copy (offset, 4), 0);
+		protected ulong LoadSigned8BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64(this.Copy (offset, 1), 0);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected ulong LoadUnsigned8BitAsUnsigned64 (int offset) {
+			return BitConverter.ToUInt64(this.Copy (offset, 1), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load16BitAsUnsigned32 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt32(self.Copy (offset, 2), 0);
+		protected long Load32BitAsSigned32 (int offset) {
+			return BitConverter.ToInt32(this.Copy (offset, 4), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong Load8BitAsUnsigned32 (int offset, WebassemblyModule self) {
-			return BitConverter.ToUInt32(self.Copy (offset, 1), 0);
+		protected long LoadSigned16BitAsSigned32 (int offset) {
+			return BitConverter.ToInt32(this.Copy (offset, 2), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store64BitFrom64 (long input, int offset, WebassemblyModule self) {
+		protected long LoadUnsigned16BitAsSigned32 (int offset) {
+			return BitConverter.ToInt32(this.Copy (offset, 2), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected long LoadUnsigned8BitAsSigned32 (int offset) {
+			return BitConverter.ToInt32(this.Copy (offset, 1), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected long LoadSigned8BitAsSigned32 (int offset) {
+			return BitConverter.ToInt32(this.Copy (offset, 1), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected ulong Load32BitAsUnsigned32 (int offset) {
+			return BitConverter.ToUInt32(this.Copy (offset, 4), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected ulong LoadSigned16BitAsUnsigned32 (int offset) {
+			return BitConverter.ToUInt32(this.Copy (offset, 2), 0);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected ulong LoadUnsigned16BitAsUnsigned32 (int offset) {
+			return BitConverter.ToUInt32(this.Copy (offset, 2), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected ulong LoadSigned8BitAsUnsigned32 (int offset) {
+			return BitConverter.ToUInt32(this.Copy (offset, 1), 0);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected ulong LoadUnsigned8BitAsUnsigned32 (int offset) {
+			return BitConverter.ToUInt32(this.Copy (offset, 1), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected void Store64BitFrom64 (long input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
-			self.memory [offset + 2] = bytes [2];
-			self.memory [offset + 3] = bytes [3];
-			self.memory [offset + 4] = bytes [4];
-			self.memory [offset + 5] = bytes [5];
-			self.memory [offset + 6] = bytes [6];
-			self.memory [offset + 7] = bytes [7];
+			this.memory [offset + 0] = bytes [0];
+			this.memory [offset + 1] = bytes [1];
+			this.memory [offset + 2] = bytes [2];
+			this.memory [offset + 3] = bytes [3];
+			this.memory [offset + 4] = bytes [4];
+			this.memory [offset + 5] = bytes [5];
+			this.memory [offset + 6] = bytes [6];
+			this.memory [offset + 7] = bytes [7];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store32BitFrom64 (long input, int offset, WebassemblyModule self) {
+		protected void Store32BitFrom32 (long input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
-			self.memory [offset + 2] = bytes [2];
-			self.memory [offset + 3] = bytes [3];
+			this.memory [offset + 0] = bytes [0];
+			this.memory [offset + 1] = bytes [1];
+			this.memory [offset + 2] = bytes [2];
+			this.memory [offset + 3] = bytes [3];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store16BitFrom64 (long input, int offset, WebassemblyModule self) {
+		protected void Store16BitFrom64 (long input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
+			this.memory [offset + 0] = bytes [0];
+			this.memory [offset + 1] = bytes [1];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store8BitFrom64 (long input, int offset, WebassemblyModule self) {
+		protected void Store8BitFrom64 (long input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
+			this.memory [offset + 0] = bytes [0];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store32BitFrom32 (int input, int offset, WebassemblyModule self) {
+		protected void Store16BitFrom32 (int input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
-			self.memory [offset + 2] = bytes [3];
-			self.memory [offset + 3] = bytes [3];
+			this.memory [offset + 0] = bytes [0];
+			this.memory [offset + 1] = bytes [1];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store16BitFrom32 (int input, int offset, WebassemblyModule self) {
+		protected void Store8BitFrom32 (int input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
+			this.memory [offset + 0] = bytes [0];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void Store8BitFrom32 (int input, int offset, WebassemblyModule self) {
+		protected float LoadSingle (int offset) {
+			return BitConverter.ToSingle (this.Copy (offset, 4), 0);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected void StoreSingle (float input, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
+			this.memory [offset + 0] = bytes [0];
+			this.memory [offset + 1] = bytes [1];
+			this.memory [offset + 2] = bytes [3];
+			this.memory [offset + 3] = bytes [3];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static float LoadSingle (int offset, WebassemblyModule self) {
-			return BitConverter.ToSingle (self.Copy (offset, 4), 0);
+		protected double LoadDouble (int offset) {
+			return BitConverter.ToDouble (this.Copy (offset, 8), 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void StoreSingle (float input, int offset, WebassemblyModule self) {
+		protected void StoreDouble (double input, int align, int offset) {
 			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
-			self.memory [offset + 2] = bytes [3];
-			self.memory [offset + 3] = bytes [3];
+			this.memory [offset + 0] = bytes [0];
+			this.memory [offset + 1] = bytes [1];
+			this.memory [offset + 2] = bytes [2];
+			this.memory [offset + 3] = bytes [3];
+			this.memory [offset + 4] = bytes [4];
+			this.memory [offset + 5] = bytes [5];
+			this.memory [offset + 6] = bytes [6];
+			this.memory [offset + 7] = bytes [7];
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static double LoadDouble (int offset, WebassemblyModule self) {
-			return BitConverter.ToDouble (self.Copy (offset, 8), 0);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void StoreDouble (double input, int align, int offset, WebassemblyModule self) {
-			var bytes = BitConverter.GetBytes (input);
-			self.memory [offset + 0] = bytes [0];
-			self.memory [offset + 1] = bytes [1];
-			self.memory [offset + 2] = bytes [2];
-			self.memory [offset + 3] = bytes [3];
-			self.memory [offset + 4] = bytes [4];
-			self.memory [offset + 5] = bytes [5];
-			self.memory [offset + 6] = bytes [6];
-			self.memory [offset + 7] = bytes [7];
-		}
-
-		protected static uint CurrentMemory (WebassemblyModule self)
+		protected uint CurrentMemory ()
 		{
-			return Convert.ToUInt32 (self.memory.Length / PageSize);
+			return Convert.ToUInt32 (this.memory.Length / PageSize);
 		}
 
-		protected static uint GrowMemory (uint addition, WebassemblyModule self)
+		protected uint GrowMemory (uint addition)
 		{
-			var temp = self.memory;
+			var temp = this.memory;
 			var curr_length = temp.Length / PageSize;
 			var new_length = (curr_length + 1) * PageSize;
 
 			// Fixme: check maximum length
 			var new_memory = new byte [new_length];
-	    Array.Copy(temp, self.memory, curr_length);
-	    self.memory = new_memory;
+	    Array.Copy(temp, this.memory, curr_length);
+	    this.memory = new_memory;
 
 			return Convert.ToUInt32 (curr_length);
 		}

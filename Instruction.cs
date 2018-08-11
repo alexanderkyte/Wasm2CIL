@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 
@@ -138,10 +139,44 @@ namespace Wasm2CIL {
 		public const byte Else = 0x05;
 
 		public readonly byte Opcode;
+		//public readonly WebassemblyValueType [] StackInput;
+		//public readonly WebassemblyValueType [] StackOutput;
 
 		public WebassemblyInstruction (byte opcode)
 		{
 			this.Opcode = opcode;
+		}
+
+		protected void ShiftThisArgToFront (ILGenerator ilgen, Type [] args)
+		{
+			// Right now, we have arguments on the top of the stack.
+			// We need to shift them back to pass the "this" argument first
+			// We are going to make a scope, to give the JIT maximum visibility
+			// into the lifetime of the temporaries needed to make this call.
+			ilgen.BeginScope ();
+			var locals = new List<LocalBuilder> ();
+
+			// Traverse backwards, as last arg is the one that is pushed onto stack
+			for (int i=args.Length - 1; i >= 0; i--) {
+				Type ty = args [i];
+				LocalBuilder myLocalBuilder = ilgen.DeclareLocal(ty);
+
+				// Add backwards
+				locals.Add (myLocalBuilder);
+				ilgen.Emit (OpCodes.Stloc, myLocalBuilder);
+			}
+
+			// Emit load of "this" arg
+			ilgen.Emit (OpCodes.Ldarg_0);
+
+			// Since we added  the locals backwards, we traverse
+			// "backwards" again, to restore the stack with "this" before all
+			// the args
+			for (int i=args.Length - 1; i >= 0; i--) {
+				ilgen.Emit (OpCodes.Ldloc, locals [i]);
+			}
+
+			ilgen.EndScope ();
 		}
 
 		public abstract string ToString ();
@@ -153,7 +188,7 @@ namespace Wasm2CIL {
 		Label label;
 		public readonly int? LabelIndex;
 
-		ulong [] table;
+		WebassemblyControlInstruction [] table;
 		ulong index;
 		ulong default_target;
 		Type block_type;
@@ -281,8 +316,30 @@ namespace Wasm2CIL {
 					return;
 
 				// Br_table
-				//case 0x0e:
-					//return ilgen.Emit (OpCodes.Nop);
+				case 0x0e:
+					Label defaultCase = ilgen.DefineLabel();
+					Label endOfBlock = ilgen.DefineLabel();
+					var jumpTable = new Label [this.table.Length];
+
+					for (int i=0; i < this.table.Length; i++) {
+						jumpTable [i] = ilgen.DefineLabel();
+					}
+
+					ilgen.Emit (OpCodes.Switch, jumpTable);
+					ilgen.Emit (OpCodes.Br_S, defaultCase); 
+
+					for (int i=0; i < jumpTable.Length; i++) {
+						// Case incoming argument is equal to i
+						ilgen.MarkLabel (jumpTable [i]);
+						ilgen.Emit (OpCodes.Br_S, this.table[i].dest.GetLabel ());
+					}
+
+					ilgen.MarkLabel (defaultCase);
+					ilgen.Emit(OpCodes.Br_S, jumpTable [Convert.ToInt32 (this.default_target)]);
+
+					ilgen.MarkLabel(endOfBlock);
+
+					return;
 
 				case 0x0f:
 					ilgen.Emit (OpCodes.Ret);
@@ -290,8 +347,8 @@ namespace Wasm2CIL {
 
 				//// Call
 				case 0x10:
-					ilgen.Emit (OpCodes.Nop);
-					return;
+					//ilgen.Emit (OpCodes.Nop);
+					//return;
 
 				//case 0x11:
 					//return ilgen.Emit (OpCodes.Nop);
@@ -401,6 +458,7 @@ namespace Wasm2CIL {
 					break;
 				case 0x0C: // br
 				case 0x0D: // br_if
+				{
 					// So these indexes are labels
 					// each loop, block, 
 
@@ -424,6 +482,7 @@ namespace Wasm2CIL {
 
 					break;
 
+				}
 				case 0x02: // block
 					// need to make label 
 					this.block_type = WebassemblyResult.Convert (reader);
@@ -469,9 +528,25 @@ namespace Wasm2CIL {
 				case 0x0e: // br_table
 					// works by getting index from stack. If index is in range of table,
 					// we jump to the label at that index. Else go to default.
-					this.table = Parser.ParseLEBUnsignedArray (reader);
-					this.default_target = Parser.ParseLEBUnsigned (reader, 32);
+					var jump_labels = Parser.ParseLEBUnsignedArray (reader);
+					this.table = new WebassemblyControlInstruction [jump_labels.Length];
+
+					if (labels.Count == 0)
+						throw new Exception ("Branching with empty label stack!");
+
+					for (int i=0; i < jump_labels.Length; i++) {
+						// The entry for the switch statement has an index that defines the
+						// label of the block to jump to there. It is a reverse count from
+						// the current block, much like all other BR opcodes
+						int offset = (labels.Count () - 1) - (int) jump_labels [i];
+						this.table [i] = labels [offset];
+						if (this.table [i] == null)
+							throw new Exception ("Could not find destination of jump table");
+					}
+
+					this.default_target = Parser.ParseLEBUnsigned (reader, 32);;
 					break;
+
 				case 0x10: //call
 					this.function_index = Parser.ParseLEBUnsigned (reader, 32);
 					break;
@@ -548,7 +623,7 @@ namespace Wasm2CIL {
 						ilgen.Emit (OpCodes.Ldarg_3);
 						break;
 					default:
-						ilgen.Emit (OpCodes.Ldarg, index + 1);
+						throw new Exception ("Should not be reached");
 						break;
 				}
 			} else {
@@ -556,22 +631,21 @@ namespace Wasm2CIL {
 				int labelIndex = (int) index - num_params;
 				switch (labelIndex) {
 					case 0:
-						ilgen.Emit (OpCodes.Ldarg_0);
+						ilgen.Emit (OpCodes.Ldloc_0);
 						break;
 					case 1:
-						ilgen.Emit (OpCodes.Ldarg_1);
+						ilgen.Emit (OpCodes.Ldloc_1);
 						break;
 					case 2:
-						ilgen.Emit (OpCodes.Ldarg_2);
+						ilgen.Emit (OpCodes.Ldloc_2);
 						break;
 					case 3:
-						ilgen.Emit (OpCodes.Ldarg_3);
+						ilgen.Emit (OpCodes.Ldloc_3);
 						break;
 					default:
-						ilgen.Emit (OpCodes.Ldarg, labelIndex);
+						ilgen.Emit (OpCodes.Ldloc, labelIndex);
 						break;
 				}
-				ilgen.Emit (OpCodes.Ldloc, labelIndex);
 			}
 		}
 
@@ -652,97 +726,106 @@ namespace Wasm2CIL {
 
 		public override void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level)
 		{
-			// Right now, we have an address on the top of the stack
-
-			// Our opcode has an offset to apply to this address
-			// FIXME: we ignore alignment
-			ilgen.Emit (OpCodes.Ldc_I8, offset);
-			ilgen.Emit (OpCodes.Add);
-
-			// Get the object reference as the last argument to the call...
-			ilgen.Emit (OpCodes.Ldarg_0);
+			String method;
 			switch (Opcode) {
 				case 0x28:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Load32BitAsSigned32"));
-					return;
+					method = "Load32BitAsSigned32";
+					break;
 				case 0x29:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Load64BitAsSigned64"));
-					return;
+					method = "Load64BitAsSigned64";
+					break;
 				case 0x2a:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSingle"));
-					return;
+					method = "LoadSingle";
+					break;
 				case 0x2b:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadDouble"));
-					return;
+					method = "LoadDouble";
+					break;
 				case 0x2c:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned8BitAsSigned32"));
-					return;
+					method = "LoadSigned8BitAsSigned32";
+					break;
 				case 0x2d:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned8BitAsSigned32"));
-					return;
+					method = "LoadUnsigned8BitAsSigned32";
+					break;
 				case 0x2e:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned16BitAsSigned32"));
-					return;
+					method = "LoadSigned16BitAsSigned32";
+					break;
 				case 0x2f:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned16BitAsSigned32"));
-					return;
+					method = "LoadUnsigned16BitAsSigned32";
+					break;
 				case 0x30:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned8BitAsSigned64"));
-					return;
+					method = "LoadSigned8BitAsSigned64";
+					break;
 				case 0x31:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned8BitAsSigned64"));
-					return;
+					method = "LoadUnsigned8BitAsSigned64";
+					break;
 				case 0x32:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned16BitAsSigned64"));
-					return;
+					method = "LoadSigned16BitAsSigned64";
+					break;
 				case 0x33:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned16BitAsSigned64"));
-					return;
+					method = "LoadUnsigned16BitAsSigned64";
+					break;
 				case 0x34:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadSigned32BitAsSigned64"));
-					return;
+					method = "LoadSigned32BitAsSigned64";
+					break;
 				case 0x35:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("LoadUnsigned32BitAsSigned64"));
-					return;
+					method = "LoadUnsigned32BitAsSigned64";
+					break;
 
 				case 0x36:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store32BitFrom32"));
-					return;
+					method = "Store32BitFrom32";
+					break;
 				case 0x37:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store64BitFrom32"));
-					return;
+					method = "Store64BitFrom32";
+					break;
 				case 0x38:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("StoreSingle"));
-					return;
+					method = "StoreSingle";
+					break;
 				case 0x39:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("StoreDouble"));
-					return;
+					method = "StoreDouble";
+					break;
 
 				case 0x3a:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store8BitFrom32"));
-					return;
+					method = "Store8BitFrom32";
+					break;
 				case 0x3b:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store16BitFrom32"));
-					return;
+					method = "Store16BitFrom32";
+					break;
 				case 0x3c:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store8BitFrom64"));
-					return;
+					method = "Store8BitFrom64";
+					break;
 				case 0x3d:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store16BitFrom64"));
-					return;
+					method = "Store16BitFrom64";
+					break;
 				case 0x3e:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("Store32BitFrom64"));
-					return;
+					method = "Store32BitFrom64";
+					break;
 
 				case 0x3f:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("CurrentMemory"));
-					return;
+					method = "CurrentMemory";
+					break;
 				case 0x40:
-					ilgen.Emit(OpCodes.Call, typeof (WebassemblyModule).GetMethod ("GrowMemory"));
-					return;
+					method = "GrowMemory";
+					break;
 				default:
 					throw new Exception (String.Format("Should not be reached: {0:X}", Opcode));
 			}
+
+			// Our opcode has an offset to apply to this address on top of the stack
+			// FIXME: we ignore alignment
+			ilgen.Emit (OpCodes.Ldc_I4, Convert.ToInt32 (offset));
+			ilgen.Emit (OpCodes.Add);
+
+			// Now we want to set ourselves up for a call
+			var method_info = typeof (WebassemblyModule).GetMethod (method, BindingFlags.Instance | BindingFlags.NonPublic);
+			if (method_info == null)
+				throw new Exception (String.Format("Could not find {0} in runtime", method));
+			var call_types = new List<Type> ();
+
+			foreach (var param_info in method_info.GetParameters ())
+				call_types.Add (param_info.ParameterType);
+
+			ShiftThisArgToFront (ilgen, call_types.ToArray ());
+			ilgen.Emit(OpCodes.Call, method_info);
 
 			return;
 		}
@@ -1450,7 +1533,7 @@ namespace Wasm2CIL {
 			if (this.Opcode > 0xBF) {
 				throw new Exception ("Numerical opcode out of range");
 			} else if (this.Opcode == 0x41) {
-				operand_i32 = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
+				operand_i32 = Parser.ParseLEBSigned32 (reader);
 			} else if (this.Opcode == 0x42) {
 				operand_i64 = Parser.ParseLEBSigned (reader, 64);
 			} else if (this.Opcode == 0x43) {

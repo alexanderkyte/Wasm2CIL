@@ -611,6 +611,10 @@ namespace Wasm2CIL {
 			return accum;
 		}
 
+		public static int ParseLEBSigned32 (BinaryReader reader) {
+			return (int) ParseLEB (reader, 32, true);
+		}
+
 		public static long ParseLEBSigned (BinaryReader reader, int size_bits) {
 			return (long) ParseLEB (reader, Convert.ToUInt32 (size_bits), true);
 		}
@@ -619,14 +623,14 @@ namespace Wasm2CIL {
 			return (ulong) ParseLEB (reader, Convert.ToUInt32 (size_bits), false);
 		}
 
-        public static string ReadString(BinaryReader reader)
-        {
-            int length = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
-            char[] chars = reader.ReadChars(length);
-            return new string(chars);
-        }
+		public static string ReadString(BinaryReader reader)
+		{
+			int length = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
+			char[] chars = reader.ReadChars(length);
+			return new string(chars);
+		}
 
-        public static IntPtr ParseLEB (BinaryReader reader, uint size_bits, bool signed)
+		public static IntPtr ParseLEB (BinaryReader reader, uint size_bits, bool signed)
 		{
 			// Taken from pseudocode here: https://en.wikipedia.org/wiki/LEB128
 			ulong result = 0;
