@@ -70,37 +70,29 @@ namespace Wasm2CIL {
 			this.valueTypeInit = valueTypeInit;
 		}
 
-		public Type GetType () {
+		public Type AsType () {
 			if (Count == 1) {
 				switch (valueTypeInit) {
 					case WebassemblyValueType.I32:
 						return typeof (int);
-						break;
 					case WebassemblyValueType.I64:
 						return typeof (long);
-						break;
 					case WebassemblyValueType.F32:
 						return typeof (float);
-						break;
 					case WebassemblyValueType.F64:
 						return typeof (double);
-						break;
 				}
 			}
 
 			switch (valueTypeInit) {
 				case WebassemblyValueType.I32:
 					return typeof (int);
-					break;
 				case WebassemblyValueType.I64:
 					return typeof (long);
-					break;
 				case WebassemblyValueType.F32:
 					return typeof (float);
-					break;
 				case WebassemblyValueType.F64:
 					return typeof (double);
-					break;
 			}
 
 			throw new Exception ("Illegal local type");
@@ -278,7 +270,7 @@ namespace Wasm2CIL {
 			var index = 0;
 
 			for (int i=0; i < locals.Length; i++) {
-				var ty = locals [i].GetType ();
+				var ty = locals [i].AsType ();
 				for (int j=0; j < locals [i].Count; j++)
 					outputLocals [index++] = ilgen.DeclareLocal (ty);
 			}
@@ -380,7 +372,7 @@ namespace Wasm2CIL {
 			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly (aName, AssemblyBuilderAccess.RunAndSave);
 
 			// FIXME: always want to provide debug info or not?
-			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, true);
+			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, outputFilePath);
 
 			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public, typeof (WebassemblyModule));
 
@@ -420,10 +412,12 @@ namespace Wasm2CIL {
 				var emitted = fn.Emit (type, tb, fn_name);
 			}
 
+			var goal = tb.CreateType ();
+
 			if (outputFilePath != null)
 				ab.Save (outputFilePath);
 
-			return tb.CreateType ();
+			return goal;
 		}
 
 		void ParseTypeSection (BinaryReader reader)

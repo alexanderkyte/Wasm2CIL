@@ -9,7 +9,7 @@ dis: FactorialProxy.dll
 	monodis FactorialProxy.dll
 
 FactorialProxy.dll: Wasm2CIL.exe factorial.wasm Makefile
-	mono --debug Wasm2CIL.exe factorial.wasm Factorial
+	mono --debug Wasm2CIL.exe factorial.wasm FactorialProxy
 
 Wasm2CIL.exe: Makefile Parser.cs Instruction.cs WebassemblyModule.dll Embedder.cs
 	mcs -debug Parser.cs Instruction.cs Embedder.cs -r:WebassemblyModule.dll -o Wasm2CIL.exe

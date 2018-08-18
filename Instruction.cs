@@ -179,7 +179,7 @@ namespace Wasm2CIL {
 			ilgen.EndScope ();
 		}
 
-		public abstract string ToString ();
+		public override abstract string ToString ();
 		public abstract void Emit (IEnumerator<WebassemblyInstruction> cursor, ILGenerator ilgen, WebassemblyCodeParser top_level);
 	}
 
