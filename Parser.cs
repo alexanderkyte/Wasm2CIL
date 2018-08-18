@@ -4,6 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 
 namespace Wasm2CIL {
 	public static class WebassemblySection
@@ -365,15 +366,21 @@ namespace Wasm2CIL {
 		WebassemblyExport [] exports;
 		WebassemblyImport [] imports;
 
+		// The async tasks involved in parsing
+		Task [] work;
+
 		// Can only be called after all sections are done parsing
-		public void Emit (string outputName)
+		public Type
+		Emit (string outputName, string outputFilePath)
 		{
-			var assemblyName = String.Format ("{0}Proxy", outputName);
-			AssemblyName aName = new AssemblyName (assemblyName);
+			// Make sure we are finished parsing.
+			Task.WaitAll (work);
+
+			AssemblyName aName = new AssemblyName (String.Format ("{0}Proxy", outputName));
 			AssemblyBuilder ab = AppDomain.CurrentDomain.DefineDynamicAssembly (aName, AssemblyBuilderAccess.RunAndSave);
-			var outputFileExtension = start_idx == -1 ? ".dll" : ".exe";
-			var outputFileName = assemblyName + outputFileExtension;
-			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, outputFileName);
+
+			// FIXME: always want to provide debug info or not?
+			ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, true);
 
 			TypeBuilder tb = mb.DefineType (outputName, TypeAttributes.Public, typeof (WebassemblyModule));
 
@@ -413,24 +420,13 @@ namespace Wasm2CIL {
 				var emitted = fn.Emit (type, tb, fn_name);
 			}
 
-				//var dummy_entry = tb.DefineMethod ("Main", MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.Public, typeof(void), new Type[] { typeof(string[]) });
-				//var dummy_gen = dummy_entry.GetILGenerator ();
-				//dummy_gen.Emit(OpCodes.Ldarg, 0);
-				//dummy_gen.Emit(OpCodes.Ldc_I4_0, 0);
-				//dummy_gen.Emit(OpCodes.Ldelem_Ref, 0);
-				//dummy_gen.Emit(OpCodes.Call, typeof (System.Convert).GetMethod("ToInt32", new Type [] {typeof (string)}));
-				//dummy_gen.Emit(OpCodes.Call, emitted);
-				//dummy_gen.Emit(OpCodes.Call, typeof (System.Console).GetMethod ("WriteLine", new Type [] {typeof (double)}));
-				//dummy_gen.Emit(OpCodes.Ret);
-				//ab.SetEntryPoint (dummy_entry);
-			tb.CreateType ();
+			if (outputFilePath != null)
+				ab.Save (outputFilePath);
 
-			ab.Save (outputFileName);
-
-			//return Assembly.LoadFrom (outputFileName);
+			return tb.CreateType ();
 		}
 
-		public void ParseTypeSection (BinaryReader reader)
+		void ParseTypeSection (BinaryReader reader)
 		{
 			int num_types = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			Console.WriteLine ("Parse type section:  #types: {0}", num_types);
@@ -446,22 +442,24 @@ namespace Wasm2CIL {
 			}
 		}
 
-		public void ParseFunctionSection (BinaryReader reader)
+		void ParseFunctionSection (BinaryReader reader)
 		{
 			fn_to_type = ParseLEBUnsignedArray (reader);
 			Console.WriteLine ("Parse function section:  #types: {0} ", fn_to_type.Length);
 		}
 
-		public void ParseStartSection(BinaryReader reader)
+		void ParseStartSection(BinaryReader reader)
 		{
 			start_idx = (long) Parser.ParseLEBUnsigned (reader, 32);
 			Console.WriteLine ("Parse start section:  #index: {0} ", start_idx);
 		}
 
-		public void ParseCodeSection (BinaryReader sectionReader)
+		void ParseCodeSection (BinaryReader sectionReader)
 		{
 			int count = Convert.ToInt32 (Parser.ParseLEBSigned (sectionReader, 32));
 			exprs = new WebassemblyFunc [count];
+
+			// fixme: use tasks / parse in parallel
 
 			for (int i=0; i < count; i++) {
 				int size_of_entry = Convert.ToInt32 (Parser.ParseLEBUnsigned (sectionReader, 32));
@@ -476,7 +474,7 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parsed code section done");
 		}
 
-		public void ParseMemorySection(BinaryReader reader)
+		void ParseMemorySection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			if (count != 1)
@@ -486,7 +484,7 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parsed memory section. Limit is {0} {1}", this.mem.limit.min, this.mem.limit.max);
 		}
 
-		public void ParseTableSection(BinaryReader reader)
+		void ParseTableSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			if (count != 1)
@@ -498,7 +496,7 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parsed table section. Limit is {0} {1}", limit.min, limit.max);
 		}
 
-		public void ParseGlobalSection(BinaryReader reader)
+		void ParseGlobalSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			this.globals = new WebassemblyGlobal [count];
@@ -509,7 +507,7 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parsed global section, {0}", count);
 		}
 
-		public void ParseElementSection(BinaryReader reader)
+		void ParseElementSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			this.elements = new WebassemblyElementInit [count];
@@ -520,7 +518,7 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parsed element section, {0}", count);
 		}
 
-		public void ParseDataSection(BinaryReader reader)
+		void ParseDataSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32 (Parser.ParseLEBSigned (reader, 32));
 			this.data = new WebassemblyDataInit [count];
@@ -531,7 +529,7 @@ namespace Wasm2CIL {
 			Console.WriteLine ("Parsed data section, {0}", count);
 		}
 
-		public void ParseImportSection(BinaryReader reader)
+		void ParseImportSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
 			this.imports = new WebassemblyImport [count];
@@ -542,7 +540,7 @@ namespace Wasm2CIL {
 			Console.WriteLine("Parsed import section, {0}", count);
 		}
 
-		public void ParseExportSection(BinaryReader reader)
+		void ParseExportSection(BinaryReader reader)
 		{
 			var count = Convert.ToInt32(Parser.ParseLEBUnsigned(reader,32));
 			this.exports = new WebassemblyExport [count];
@@ -553,7 +551,7 @@ namespace Wasm2CIL {
 			Console.WriteLine("Parsed export section, {0}", count);
 		}
 
-		public void ParseSection (int section_num, byte [] section)
+		void ParseSection (int section_num, byte [] section)
 		{
 			Console.WriteLine ("Parse section {0} length {1}", section_num, section.Length);
 			var memory = new MemoryStream (section);
@@ -623,7 +621,7 @@ namespace Wasm2CIL {
 			return (ulong) ParseLEB (reader, Convert.ToUInt32 (size_bits), false);
 		}
 
-		public static string ReadString(BinaryReader reader)
+		public static string ReadString (BinaryReader reader)
 		{
 			int length = Convert.ToInt32(Parser.ParseLEBUnsigned(reader, 32));
 			char[] chars = reader.ReadChars(length);
@@ -670,51 +668,32 @@ namespace Wasm2CIL {
 			return (IntPtr) result;
 		}
 
-		public Parser () 
+		public Parser (Stream source) 
 		{
 			start_idx = -1;
-		}
 
-		public static void Main (string [] args) 
-		{
-			var inputPath = args [0];
-			var outputName = args [1];
-			var parser = new Parser ();
+			using (BinaryReader reader = new BinaryReader (source)) {
+				var magic_constant = reader.ReadInt32 ();
+				if (magic_constant != Parser.WebassemblyMagic)
+					throw new Exception (String.Format ("Unsupported magic number {0} != {1}", magic_constant, Parser.WebassemblyMagic));
 
-			try
-			{
-				if (File.Exists (inputPath)) {
-					using (BinaryReader reader = new BinaryReader(File.Open(inputPath, FileMode.Open))) {
-						var magic_constant = reader.ReadInt32 ();
-						if (magic_constant != Parser.WebassemblyMagic)
-							throw new Exception (String.Format ("Unsupported magic number {0} != {1}", magic_constant, Parser.WebassemblyMagic));
+				var version_constant = reader.ReadInt32 ();
+				if (version_constant != Parser.WebassemblyVersion)
+					throw new Exception (String.Format ("Unsupported version number {0} != {1}", version_constant, Parser.WebassemblyVersion));
 
-						var version_constant = reader.ReadInt32 ();
-						if (version_constant != Parser.WebassemblyVersion)
-							throw new Exception (String.Format ("Unsupported version number {0} != {1}", magic_constant, Parser.WebassemblyVersion));
-
-						// Read the sections
-						while (reader.BaseStream.Position != reader.BaseStream.Length) {
-							int id = (int) Parser.ParseLEBUnsigned (reader, 7);
-							int len = (int) Parser.ParseLEBUnsigned (reader, 32);
-							var this_section = reader.ReadBytes (len);
-							// Read slen number bytes into section bytes
-							// Process section
-							// asynchronously parse?
-							parser.ParseSection (id, this_section);
-						}
-
-						parser.Emit (outputName);
-					}
-				} else {
-					throw new Exception (String.Format ("Missing file {0}", inputPath));
+				// Read the sections
+				var accum = new List<Task> ();
+				while (reader.BaseStream.Position != reader.BaseStream.Length) {
+					int id = (int) Parser.ParseLEBUnsigned (reader, 7);
+					int len = (int) Parser.ParseLEBUnsigned (reader, 32);
+					var this_section = reader.ReadBytes (len);
+					// Read slen number bytes into section bytes
+					// Process section
+					// asynchronously parse?
+					accum.Add (Task.Run (() => this.ParseSection (id, this_section)));
 				}
+				this.work = accum.ToArray ();
 			}
-			catch (FileNotFoundException ioEx)
-			{
-				Console.WriteLine("Error: {0}", ioEx.Message);
-			}
-            //Console.ReadKey();
 		}
 	}
 }

@@ -8,11 +8,11 @@ test: dis
 dis: FactorialProxy.dll 
 	monodis FactorialProxy.dll
 
-FactorialProxy.dll: Parser.exe factorial.wasm Makefile
-	mono --debug Parser.exe factorial.wasm Factorial
+FactorialProxy.dll: Wasm2CIL.exe factorial.wasm Makefile
+	mono --debug Wasm2CIL.exe factorial.wasm Factorial
 
-Parser.exe: Parser.cs Makefile Instruction.cs WebassemblyModule.dll
-	mcs -debug Parser.cs Instruction.cs -r:WebassemblyModule.dll
+Wasm2CIL.exe: Makefile Parser.cs Instruction.cs WebassemblyModule.dll Embedder.cs
+	mcs -debug Parser.cs Instruction.cs Embedder.cs -r:WebassemblyModule.dll -o Wasm2CIL.exe
 
 .PHONY: aot
 aot: FactorialProxy.dll
@@ -37,7 +37,7 @@ run: FactorialProxy.dll
 
 .PHONY: clean
 clean:
-	- rm -rf Parser.exe
+	- rm -rf Wasm2CIL.exe
 
 WebassemblyModule.dll: WebassemblyModule.cs
 	mcs -t:library WebassemblyModule.cs
